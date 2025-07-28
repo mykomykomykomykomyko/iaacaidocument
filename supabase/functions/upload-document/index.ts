@@ -123,22 +123,23 @@ serve(async (req) => {
     // Trigger AI analysis in the background
     try {
       console.log('Starting background analysis...');
-      const analysisPromise = fetch(`${supabaseUrl}/functions/v1/analyze-document`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${supabaseServiceKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      
+      // Use Supabase client to invoke the function instead of direct HTTP call
+      const analysisPromise = supabase.functions.invoke('analyze-document', {
+        body: {
           document_id: document.id,
           persona: 'general',
           analysis_type: 'comprehensive'
-        }),
+        }
       });
       
       // Don't await - let it run in background
-      analysisPromise.then(() => {
-        console.log('Analysis completed');
+      analysisPromise.then((result) => {
+        if (result.error) {
+          console.error('Analysis failed:', result.error);
+        } else {
+          console.log('Analysis completed successfully');
+        }
       }).catch(error => {
         console.error('Analysis failed:', error);
       });
