@@ -86,14 +86,18 @@ export const DocumentUpload = () => {
   // Debug function to manually trigger analysis for existing documents
   const handleManualAnalysis = async () => {
     try {
-      // Test with the HTML document that was uploaded
+      // Test with the HTML document (Northern Road Link Project)
       const result = await triggerAnalysisForDocument('13b863ba-1eb6-4ac9-9a8f-0e6e86813152');
+      
+      console.log('Manual analysis result:', result);
+      
       if (result.success) {
         toast({
           title: "Analysis triggered",
-          description: "Manual analysis started for test document"
+          description: "Manual analysis started for HTML document. Check console for details."
         });
       } else {
+        console.error('Analysis failed with error:', result.error);
         toast({
           title: "Analysis failed",
           description: result.error?.message || "Failed to start analysis",
