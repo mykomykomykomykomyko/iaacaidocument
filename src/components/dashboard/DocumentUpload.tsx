@@ -4,12 +4,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Upload, FileText, CheckCircle, AlertCircle, Play, Sparkles, Eye } from "lucide-react";
+import { Upload, FileText, CheckCircle, AlertCircle, Play, Sparkles, Eye, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { AnalysisConfigDialog } from "./AnalysisConfigDialog";
 import { DocumentViewerDialog } from "./DocumentViewerDialog";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const DocumentUpload = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -21,6 +31,9 @@ export const DocumentUpload = () => {
   const [analysisDialogOpen, setAnalysisDialogOpen] = useState(false);
   const [viewerDialogOpen, setViewerDialogOpen] = useState(false);
   const [documentForViewing, setDocumentForViewing] = useState<any>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [documentToDelete, setDocumentToDelete] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,6 +128,45 @@ export const DocumentUpload = () => {
     setViewerDialogOpen(true);
   };
 
+  const handleDeleteDocument = (document: any) => {
+    setDocumentToDelete(document);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!documentToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      // Delete the document from Supabase (this will cascade delete related analyses)
+      const { error } = await supabase
+        .from('documents')
+        .delete()
+        .eq('id', documentToDelete.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Document deleted",
+        description: "Document and related analyses have been permanently deleted."
+      });
+
+      // Refresh the documents list
+      refetchDocuments();
+      setDeleteDialogOpen(false);
+      setDocumentToDelete(null);
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast({
+        title: "Delete failed",
+        description: error.message || "Failed to delete document",
+        variant: "destructive"
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const getStatusIcon = () => {
     switch (uploadStatus) {
       case 'uploading':
@@ -201,7 +253,7 @@ export const DocumentUpload = () => {
                     <p className="font-medium text-body truncate">{doc.title}</p>
                     <p className="text-xs text-muted-foreground">{doc.filename}</p>
                   </div>
-                  <div className="flex items-center space-x-8pt">
+                  <div className="flex items-center space-x-4pt">
                     <Button 
                       variant="ghost" 
                       size="sm"
@@ -217,6 +269,14 @@ export const DocumentUpload = () => {
                     >
                       <Sparkles className="h-3 w-3 mr-4pt" />
                       Analyze
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleDeleteDocument(doc)}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>
                 </div>
@@ -255,6 +315,35 @@ export const DocumentUpload = () => {
           open={viewerDialogOpen}
           onOpenChange={setViewerDialogOpen}
         />
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Document</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete "{documentToDelete?.title}"? This action cannot be undone and will also delete all related analyses.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={confirmDelete}
+                disabled={isDeleting}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {isDeleting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-8pt"></div>
+                    Deleting...
+                  </>
+                ) : (
+                  'Delete Document'
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );
