@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,7 @@ import { triggerAnalysisForDocument, triggerBulkAnalysis } from "@/utils/trigger
 import { extractPDFText } from "@/utils/pdfParser";
 
 export const DocumentUpload = () => {
+  const { t } = useLanguage();
   const [isPlainText, setIsPlainText] = useState(false);
   const [plainTextContent, setPlainTextContent] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -360,7 +362,7 @@ export const DocumentUpload = () => {
       <CardHeader>
         <CardTitle className="flex items-center space-x-8pt">
           <FileText className="h-5 w-5" />
-          <span>Upload Document</span>
+          <span>{t('upload.title')}</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-16pt">

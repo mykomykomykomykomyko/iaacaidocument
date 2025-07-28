@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 import { AnalysisDetailDialog } from "./AnalysisDetailDialog";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Analysis {
   id: string;
@@ -46,6 +47,7 @@ const getPersonaDisplayName = (persona: string) => {
 };
 
 export const RecentAnalyses = () => {
+  const { t } = useLanguage();
   const [selectedAnalysis, setSelectedAnalysis] = useState<Analysis | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -84,10 +86,10 @@ export const RecentAnalyses = () => {
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center space-x-8pt">
             <FileText className="h-5 w-5" />
-            <span>Recent Analyses</span>
+            <span>{t('upload.recentAnalyses')}</span>
           </div>
           <Button variant="outline" size="sm">
-            View All
+            {t('upload.viewAll')}
           </Button>
         </CardTitle>
       </CardHeader>
@@ -138,7 +140,7 @@ export const RecentAnalyses = () => {
                   </div>
                   <Button variant="ghost" size="sm" onClick={() => handleViewReport(analysis)}>
                     <ExternalLink className="h-3 w-3 mr-4pt" />
-                    View Report
+                    {t('upload.viewReport')}
                   </Button>
                 </div>
               </div>
@@ -147,8 +149,8 @@ export const RecentAnalyses = () => {
         ) : (
           <div className="text-center py-32pt text-muted-foreground">
             <FileText className="h-12 w-12 mx-auto mb-16pt text-muted-foreground/50" />
-            <p className="text-body">No analyses yet</p>
-            <p className="text-body">Upload documents to get started</p>
+            <p className="text-body">{t('upload.noAnalyses')}</p>
+            <p className="text-body">{t('upload.getStarted')}</p>
           </div>
         )}
       </CardContent>

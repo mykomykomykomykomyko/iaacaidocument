@@ -107,6 +107,14 @@ const translations = {
     'stats.fileFormatsDesc': 'Different document types supported',
     'stats.completedDesc': 'Successfully processed documents',
     
+    // Document Upload
+    'upload.title': 'Upload Document',
+    'upload.recentAnalyses': 'Recent Analyses',
+    'upload.viewAll': 'View All',
+    'upload.noAnalyses': 'No analyses yet',
+    'upload.getStarted': 'Upload documents to get started',
+    'upload.viewReport': 'View Report',
+    
     // Common
     'common.save': 'Save',
     'common.cancel': 'Cancel',
@@ -215,6 +223,14 @@ const translations = {
     'stats.aiAnalysesDesc': 'Évaluations environnementales par IA',
     'stats.fileFormatsDesc': 'Différents types de documents pris en charge',
     'stats.completedDesc': 'Documents traités avec succès',
+    
+    // Document Upload
+    'upload.title': 'Télécharger un document',
+    'upload.recentAnalyses': 'Analyses récentes',
+    'upload.viewAll': 'Voir tout',
+    'upload.noAnalyses': 'Aucune analyse pour le moment',
+    'upload.getStarted': 'Téléchargez des documents pour commencer',
+    'upload.viewReport': 'Voir le rapport',
     
     // Common
     'common.save': 'Enregistrer',
