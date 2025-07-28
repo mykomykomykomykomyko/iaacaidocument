@@ -120,10 +120,38 @@ serve(async (req) => {
 
     console.log(`Document uploaded successfully with ID: ${document.id}`);
 
+    // Trigger AI analysis in the background
+    try {
+      console.log('Starting background analysis...');
+      const analysisPromise = fetch(`${supabaseUrl}/functions/v1/analyze-document`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseServiceKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          document_id: document.id,
+          persona: 'general',
+          analysis_type: 'comprehensive'
+        }),
+      });
+      
+      // Don't await - let it run in background
+      analysisPromise.then(() => {
+        console.log('Analysis completed');
+      }).catch(error => {
+        console.error('Analysis failed:', error);
+      });
+      
+    } catch (analysisError) {
+      console.error('Failed to trigger analysis:', analysisError);
+      // Don't fail the upload if analysis trigger fails
+    }
+
     return new Response(JSON.stringify({
       success: true,
       document,
-      message: 'Document uploaded successfully'
+      message: 'Document uploaded and analysis started'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

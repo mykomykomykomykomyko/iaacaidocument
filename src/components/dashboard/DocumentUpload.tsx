@@ -54,7 +54,7 @@ export const DocumentUpload = () => {
       setUploadStatus('success');
       toast({
         title: "Upload successful",
-        description: "Document has been uploaded and analysis has started"
+        description: "Document uploaded and AI analysis started. Check Recent Analyses for results."
       });
 
       // Reset form
@@ -65,6 +65,9 @@ export const DocumentUpload = () => {
       // Reset file input
       const fileInput = document.getElementById('file-upload') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
+
+      // Refresh the page data to show new analysis
+      window.location.reload();
 
     } catch (error) {
       console.error('Upload error:', error);

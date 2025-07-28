@@ -43,8 +43,9 @@ const getPersonaDisplayName = (persona: string) => {
 };
 
 export const RecentAnalyses = () => {
-  const { data: analyses, isLoading } = useQuery({
+  const { data: analyses, isLoading, refetch } = useQuery({
     queryKey: ['recent-analyses'],
+    refetchInterval: 5000, // Refresh every 5 seconds to show new analyses
     queryFn: async () => {
       const { data, error } = await supabase
         .from('analyses')
