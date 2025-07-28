@@ -59,12 +59,55 @@ serve(async (req) => {
       }
     }
 
+    // Generate descriptive analysis title using AI
+    console.log('Generating analysis title...');
+    const titlePrompt = `Based on this document title and content, create a concise, descriptive analysis title (max 60 characters):
+
+Document Title: ${document.title}
+Content Preview: ${document.content?.substring(0, 500) || 'No content preview'}
+
+Generate a title that summarizes what this analysis covers. Format: "[Analysis Type] - [Key Topic/Location]"
+Examples: 
+- "Environmental Impact - Fraser River Project"
+- "Wildlife Assessment - Northern Caribou Habitat"
+- "Water Quality Analysis - Mining Operations"
+
+Just return the title, nothing else.`;
+
+    let analysisTitle = `Analysis of ${document.title}`;
+    try {
+      const titleResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: titlePrompt
+            }]
+          }]
+        }),
+      });
+
+      if (titleResponse.ok) {
+        const titleData = await titleResponse.json();
+        const generatedTitle = titleData.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        if (generatedTitle && generatedTitle.length > 10 && generatedTitle.length <= 80) {
+          analysisTitle = generatedTitle.replace(/['"]/g, ''); // Remove quotes
+          console.log('Generated analysis title:', analysisTitle);
+        }
+      }
+    } catch (titleError) {
+      console.warn('Failed to generate custom title, using default:', titleError);
+    }
+
     // Create analysis record
     const { data: analysis, error: analysisError } = await supabase
       .from('analyses')
       .insert({
         document_id,
-        title: `Analysis of ${document.title}`,
+        title: analysisTitle,
         analysis_type,
         status: 'processing',
         persona_id: persona_id || null,

@@ -43,8 +43,10 @@ const PersonasManagement = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isAIGenerateDialogOpen, setIsAIGenerateDialogOpen] = useState(false);
   const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
   const [isGeneratingPersona, setIsGeneratingPersona] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -135,6 +137,59 @@ const PersonasManagement = () => {
       });
     } catch (error) {
       console.error('Persona generation error:', error);
+      toast({
+        title: "Generation failed",
+        description: "Failed to generate persona with AI. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingPersona(false);
+    }
+  };
+
+  const generatePersonaFromPrompt = async () => {
+    if (!aiPrompt.trim()) {
+      toast({
+        title: "Missing prompt",
+        description: "Please provide a prompt to generate a persona",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsGeneratingPersona(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-persona', {
+        body: { description: aiPrompt.trim() }
+      });
+
+      if (error) throw error;
+
+      const personaData = {
+        name: data.name,
+        description: aiPrompt.trim(),
+        system_prompt: data.system_prompt,
+        expertise_areas: data.expertise_areas ? data.expertise_areas.join(", ") : "",
+        avatar_emoji: data.avatar_emoji,
+        is_default: false
+      };
+
+      const { error: saveError } = await supabase
+        .from('personas')
+        .insert([personaData]);
+      
+      if (saveError) throw saveError;
+
+      toast({
+        title: "Persona created",
+        description: "AI has generated and saved your new persona!"
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['personas'] });
+      setIsAIGenerateDialogOpen(false);
+      setAiPrompt("");
+    } catch (error) {
+      console.error('AI persona generation error:', error);
       toast({
         title: "Generation failed",
         description: "Failed to generate persona with AI. Please try again.",
@@ -325,10 +380,16 @@ const PersonasManagement = () => {
                 Manage specialized AI personas for document analysis
               </p>
             </div>
-            <Button onClick={handleCreate} className="gradient-btn">
-              <Plus className="h-4 w-4 mr-8pt" />
-              Create New Persona
-            </Button>
+            <div className="flex items-center space-x-12pt">
+              <Button onClick={() => setIsAIGenerateDialogOpen(true)} variant="outline">
+                <Brain className="h-4 w-4 mr-8pt" />
+                AI Generate
+              </Button>
+              <Button onClick={handleCreate} className="gradient-btn">
+                <Plus className="h-4 w-4 mr-8pt" />
+                Create New Persona
+              </Button>
+            </div>
           </div>
 
           {isLoading ? (
@@ -463,6 +524,55 @@ const PersonasManagement = () => {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+
+          {/* AI Generate Dialog */}
+          <Dialog open={isAIGenerateDialogOpen} onOpenChange={setIsAIGenerateDialogOpen}>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle className="flex items-center space-x-8pt">
+                  <Brain className="h-5 w-5" />
+                  <span>AI Generate Persona</span>
+                </DialogTitle>
+                <p className="text-muted-foreground text-body">
+                  Describe the type of specialist you need and AI will create a complete persona
+                </p>
+              </DialogHeader>
+              <div className="space-y-16pt">
+                <div className="space-y-8pt">
+                  <Label htmlFor="ai-prompt">What kind of specialist do you need?</Label>
+                  <Textarea
+                    id="ai-prompt"
+                    value={aiPrompt}
+                    onChange={(e) => setAiPrompt(e.target.value)}
+                    placeholder="e.g., A marine biologist who specializes in coral reef impacts and ocean acidification..."
+                    rows={4}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsAIGenerateDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={generatePersonaFromPrompt}
+                  disabled={!aiPrompt.trim() || isGeneratingPersona}
+                  className="min-w-32"
+                >
+                  {isGeneratingPersona ? (
+                    <>
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-8pt"></div>
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Brain className="h-3 w-3 mr-8pt" />
+                      Generate Persona
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </main>
     </div>
