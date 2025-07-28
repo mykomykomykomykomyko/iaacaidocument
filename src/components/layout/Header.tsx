@@ -53,27 +53,27 @@ export const Header = () => {
       
       {/* Sub-navigation for app */}
       <div className="bg-muted border-b border-border">
-        <div className="container mx-auto px-6 py-3">
+        <div className="container mx-auto px-4 sm:px-6 py-3">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-semibold text-foreground">
+              <h1 className="text-lg sm:text-xl lg:text-3xl font-semibold text-foreground">
                 {t('header.appTitle')}
               </h1>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs sm:text-sm lg:text-base text-muted-foreground">
                 {t('header.agency')}
               </p>
             </div>
             
-            <nav className="flex items-center space-x-2">
+            <nav className="flex items-center space-x-1 sm:space-x-2">
               <Button 
                 variant="ghost"
                 size="sm"
                 asChild
-                className="text-white hover:text-white hover:bg-primary"
+                className="text-white hover:text-white hover:bg-primary text-xs sm:text-sm"
               >
                 <Link to="/">
-                  <Home className="h-4 w-4 mr-2" />
-                  {t('header.dashboard')}
+                  <Home className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">{t('header.dashboard')}</span>
                 </Link>
               </Button>
               
@@ -81,9 +81,9 @@ export const Header = () => {
                 onClick={toggleLanguage}
                 variant="ghost" 
                 size="sm"
-                className="ml-2"
+                className="ml-1 sm:ml-2 text-xs sm:text-sm"
               >
-                <Globe className="h-4 w-4 mr-2" />
+                <Globe className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                 {language === 'en' ? 'FR' : 'EN'}
               </Button>
               
@@ -91,11 +91,11 @@ export const Header = () => {
                 variant={location.pathname === "/personas" ? "default" : "ghost"} 
                 size="sm"
                 asChild
-                className={location.pathname === "/personas" ? "text-white hover:text-white" : "text-white hover:text-white hover:bg-primary"}
+                className={location.pathname === "/personas" ? "text-white hover:text-white text-xs sm:text-sm" : "text-white hover:text-white hover:bg-primary text-xs sm:text-sm"}
               >
                 <Link to="/personas">
-                  <User className="h-4 w-4 mr-2" />
-                  {t('header.personas')}
+                  <User className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">{t('header.personas')}</span>
                 </Link>
               </Button>
             </nav>
