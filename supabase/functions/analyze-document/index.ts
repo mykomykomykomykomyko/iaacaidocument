@@ -15,6 +15,8 @@ const corsHeaders = {
 
 serve(async (req) => {
   console.log('=== Analyze Document Function Called ===');
+  console.log('Request method:', req.method);
+  console.log('Request headers:', Object.fromEntries(req.headers.entries()));
   
   if (req.method === 'OPTIONS') {
     console.log('Handling CORS preflight request');
@@ -23,17 +25,35 @@ serve(async (req) => {
 
   try {
     console.log('Parsing request body...');
-    const requestBody = await req.json();
-    console.log('Request body:', JSON.stringify(requestBody));
+    const requestText = await req.text();
+    console.log('Raw request body:', requestText);
+    
+    let requestBody;
+    try {
+      requestBody = JSON.parse(requestText);
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      return new Response(JSON.stringify({ 
+        error: 'Invalid JSON in request body',
+        success: false 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    console.log('Parsed request body:', JSON.stringify(requestBody));
     
     const { document_id, analysis_type = 'environmental' } = requestBody;
 
-    console.log(`Starting analysis for document ${document_id} with type ${analysis_type}`);
+    console.log(`Document ID: ${document_id}, Analysis type: ${analysis_type}`);
 
+    // Check if OpenAI API key exists
+    console.log('OpenAI API key configured:', !!openaiApiKey);
     if (!openaiApiKey) {
       console.error('OPENAI_API_KEY not configured');
       return new Response(JSON.stringify({ 
-        error: 'OPENAI_API_KEY not configured',
+        error: 'OPENAI_API_KEY not configured in Supabase secrets',
         success: false 
       }), {
         status: 500,
