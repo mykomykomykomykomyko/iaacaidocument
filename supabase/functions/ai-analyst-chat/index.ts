@@ -27,11 +27,11 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Get API keys
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
     const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
 
-    if (!openAIApiKey) {
-      throw new Error('OpenAI API key not configured');
+    if (!geminiApiKey) {
+      throw new Error('Gemini API key not configured');
     }
 
     // Step 1: Search through uploaded documents
@@ -138,29 +138,26 @@ USER QUESTION: ${message}
 Please provide a helpful, accurate response based on the available context. If using information from uploaded documents, mention that the information comes from the user's documents. If using online research, you can reference that as well. Be professional and informative.`;
 
     console.log('Generating AI response...');
-    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: fullPrompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 1000,
+        contents: [{
+          parts: [{
+            text: fullPrompt
+          }]
+        }]
       }),
     });
 
-    if (!openAIResponse.ok) {
-      throw new Error(`OpenAI API error: ${openAIResponse.status}`);
+    if (!geminiResponse.ok) {
+      throw new Error(`Gemini API error: ${geminiResponse.status}`);
     }
 
-    const openAIData = await openAIResponse.json();
-    const aiResponse = openAIData.choices?.[0]?.message?.content || 'I apologize, but I could not generate a response at this time.';
+    const geminiData = await geminiResponse.json();
+    const aiResponse = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || 'I apologize, but I could not generate a response at this time.';
 
     console.log('AI response generated successfully');
 
