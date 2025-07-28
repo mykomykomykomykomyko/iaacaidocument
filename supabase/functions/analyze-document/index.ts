@@ -52,9 +52,9 @@ serve(async (req) => {
       });
     }
 
-    const documentTitle = document.metadata?.title || document.original_filename;
+    const documentTitle = document.title || document.original_filename;
     console.log(`Analyzing document: ${documentTitle}`);
-    console.log(`Text length: ${document.extracted_text?.length || 0} characters`);
+    console.log(`Text length: ${document.content?.length || 0} characters`);
 
     // Create analysis prompt
     const analysisPrompt = `Please analyze this environmental document and provide a comprehensive assessment:
@@ -64,7 +64,7 @@ Document Type: ${document.mime_type}
 File Size: ${document.file_size ? Math.round(document.file_size / 1024) : 'unknown'} KB
 
 Content to analyze:
-${document.extracted_text || 'No text content available for analysis.'}
+${document.content || 'No text content available for analysis.'}
 
 Please provide:
 1. Executive Summary (2-3 sentences)
@@ -118,7 +118,7 @@ Format your response clearly with headers and bullet points for easy parsing.`;
     console.log('Analysis completed, saving to database...');
 
     // Generate confidence score based on content available
-    const textLength = document.extracted_text?.length || 0;
+    const textLength = document.content?.length || 0;
     const confidence_score = Math.min(0.95, Math.max(0.60, 
       0.70 + (textLength > 1000 ? 0.15 : 0) + (textLength > 5000 ? 0.10 : 0)
     ));
@@ -126,7 +126,6 @@ Format your response clearly with headers and bullet points for easy parsing.`;
     // Extract structured information
     const keyFindings = extractKeyFindings(analysisContent);
     const recommendations = extractRecommendations(analysisContent);
-    const environmentalImpact = extractEnvironmentalImpacts(analysisContent);
 
     // Save analysis to database
     const { data: analysis, error: analysisError } = await supabase
@@ -134,9 +133,8 @@ Format your response clearly with headers and bullet points for easy parsing.`;
       .insert({
         document_id,
         title: `Environmental Analysis: ${documentTitle}`,
-        summary: extractSummary(analysisContent),
+        analysis_content: analysisContent,
         key_findings: keyFindings,
-        environmental_impact: environmentalImpact,
         recommendations: recommendations,
         confidence_score,
         analysis_type,

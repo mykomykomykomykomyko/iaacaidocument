@@ -16,49 +16,46 @@ export type Database = {
     Tables: {
       analyses: {
         Row: {
+          analysis_content: string | null
           analysis_type: string
           confidence_score: number | null
           created_at: string
           document_id: string
-          environmental_impact: Json | null
           id: string
           key_findings: string[] | null
-          metadata: Json | null
+          persona: string
           recommendations: string[] | null
           status: string
-          summary: string | null
           title: string
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          analysis_content?: string | null
           analysis_type?: string
           confidence_score?: number | null
           created_at?: string
           document_id: string
-          environmental_impact?: Json | null
           id?: string
           key_findings?: string[] | null
-          metadata?: Json | null
+          persona?: string
           recommendations?: string[] | null
           status?: string
-          summary?: string | null
           title: string
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          analysis_content?: string | null
           analysis_type?: string
           confidence_score?: number | null
           created_at?: string
           document_id?: string
-          environmental_impact?: Json | null
           id?: string
           key_findings?: string[] | null
-          metadata?: Json | null
+          persona?: string
           recommendations?: string[] | null
           status?: string
-          summary?: string | null
           title?: string
           updated_at?: string
           user_id?: string | null
@@ -75,48 +72,48 @@ export type Database = {
       }
       documents: {
         Row: {
+          content: string | null
           created_at: string
-          extracted_text: string | null
+          description: string | null
           file_size: number
           filename: string
           id: string
-          metadata: Json | null
           mime_type: string
           original_filename: string
-          processing_status: string
           storage_path: string
+          title: string
           updated_at: string
-          upload_date: string
+          upload_status: string
           user_id: string | null
         }
         Insert: {
+          content?: string | null
           created_at?: string
-          extracted_text?: string | null
+          description?: string | null
           file_size: number
           filename: string
           id?: string
-          metadata?: Json | null
           mime_type?: string
           original_filename: string
-          processing_status?: string
           storage_path: string
+          title: string
           updated_at?: string
-          upload_date?: string
+          upload_status?: string
           user_id?: string | null
         }
         Update: {
+          content?: string | null
           created_at?: string
-          extracted_text?: string | null
+          description?: string | null
           file_size?: number
           filename?: string
           id?: string
-          metadata?: Json | null
           mime_type?: string
           original_filename?: string
-          processing_status?: string
           storage_path?: string
+          title?: string
           updated_at?: string
-          upload_date?: string
+          upload_status?: string
           user_id?: string | null
         }
         Relationships: []
@@ -128,9 +125,6 @@ export type Database = {
           first_name: string | null
           id: string
           last_name: string | null
-          organization: string | null
-          preferences: Json | null
-          role: string | null
           updated_at: string
           user_id: string
         }
@@ -140,9 +134,6 @@ export type Database = {
           first_name?: string | null
           id?: string
           last_name?: string | null
-          organization?: string | null
-          preferences?: Json | null
-          role?: string | null
           updated_at?: string
           user_id: string
         }
@@ -152,9 +143,6 @@ export type Database = {
           first_name?: string | null
           id?: string
           last_name?: string | null
-          organization?: string | null
-          preferences?: Json | null
-          role?: string | null
           updated_at?: string
           user_id?: string
         }

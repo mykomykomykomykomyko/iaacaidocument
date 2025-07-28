@@ -9,7 +9,7 @@ import { formatDistanceToNow } from "date-fns";
 interface Analysis {
   id: string;
   title: string;
-  summary?: string;
+  analysis_content?: string;
   analysis_type: string;
   status: string;
   created_at: string;
@@ -53,7 +53,7 @@ export const RecentAnalyses = () => {
         .select(`
           id,
           title,
-          summary,
+          analysis_content,
           analysis_type,
           status,
           created_at,
