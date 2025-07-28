@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Clock, User, BarChart3, CheckCircle, AlertCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import ReactMarkdown from "react-markdown";
 
 interface Analysis {
   id: string;
@@ -135,10 +136,27 @@ export const AnalysisDetailDialog = ({ analysis, open, onOpenChange }: AnalysisD
               <CardTitle>Detailed Analysis</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="prose prose-sm max-w-none">
+              <div className="prose prose-sm max-w-none dark:prose-invert">
                 {analysis.analysis_content ? (
-                  <div className="whitespace-pre-wrap text-body leading-relaxed">
-                    {analysis.analysis_content}
+                  <div className="text-body leading-relaxed">
+                    <ReactMarkdown 
+                      components={{
+                        h1: ({ children }) => <h1 className="text-lg font-semibold mb-16pt mt-24pt">{children}</h1>,
+                        h2: ({ children }) => <h2 className="text-base font-semibold mb-12pt mt-20pt">{children}</h2>,
+                        h3: ({ children }) => <h3 className="text-body font-semibold mb-8pt mt-16pt">{children}</h3>,
+                        p: ({ children }) => <p className="mb-12pt text-body leading-relaxed">{children}</p>,
+                        ul: ({ children }) => <ul className="mb-12pt ml-20pt list-disc space-y-4pt">{children}</ul>,
+                        ol: ({ children }) => <ol className="mb-12pt ml-20pt list-decimal space-y-4pt">{children}</ol>,
+                        li: ({ children }) => <li className="text-body">{children}</li>,
+                        strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                        em: ({ children }) => <em className="italic">{children}</em>,
+                        blockquote: ({ children }) => <blockquote className="border-l-4 border-primary pl-16pt my-12pt italic text-muted-foreground">{children}</blockquote>,
+                        code: ({ children }) => <code className="bg-muted px-4pt py-2pt rounded text-xs font-mono">{children}</code>,
+                        pre: ({ children }) => <pre className="bg-muted p-12pt rounded overflow-x-auto mb-12pt">{children}</pre>,
+                      }}
+                    >
+                      {analysis.analysis_content}
+                    </ReactMarkdown>
                   </div>
                 ) : (
                   <div className="text-center py-32pt text-muted-foreground">
