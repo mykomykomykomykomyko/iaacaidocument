@@ -1,173 +1,151 @@
 import { Header } from "@/components/layout/Header";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Link, useNavigate } from "react-router-dom";
-import { FileText, MessageSquare, BarChart3, Upload, Shield, Zap } from "lucide-react";
+import { StatsCards } from "@/components/dashboard/StatsCards";
+import { DocumentUpload } from "@/components/dashboard/DocumentUpload";
+import { ChatbotInterface } from "@/components/dashboard/ChatbotInterface";
+import { RecentAnalyses } from "@/components/dashboard/RecentAnalyses";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FileText, MessageSquare, BarChart3, Upload } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-
 const Index = () => {
   const { t } = useLanguage();
-  const navigate = useNavigate();
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Hero Section */}
-        <section className="py-12 lg:py-20 text-center">
-          <div className="space-y-6 lg:space-y-8">
-            <h1 className="text-3xl sm:text-4xl lg:text-6xl xl:text-7xl font-bold text-foreground canada-heading">
-              IAAC.AI (iaac.ai)
-            </h1>
-            <p className="text-lg sm:text-xl lg:text-2xl xl:text-3xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
-              Advanced AI-powered document analysis and research tool for the Government of Canada
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-6">
-              <Button onClick={() => navigate('/dashboard')} size="lg" className="canada-btn-primary text-base lg:text-lg px-8 py-4">
-                Get Started
-              </Button>
-              <Button variant="outline" size="lg" className="text-base lg:text-lg px-8 py-4">
-                Learn More
-              </Button>
-            </div>
-          </div>
-        </section>
+      
+      <main className="container mx-auto px-4 sm:px-8 lg:px-24pt py-8 sm:py-16 lg:py-32pt space-y-8 sm:space-y-16 lg:space-y-32pt animate-fade-in-up">
+        
 
-        {/* Features Section */}
-        <section className="py-12 lg:py-20">
-          <div className="text-center mb-12 lg:mb-16">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-foreground mb-4">
-              Key Features
-            </h2>
-            <p className="text-base sm:text-lg lg:text-xl xl:text-2xl text-muted-foreground max-w-3xl mx-auto">
-              Powerful tools designed for government document analysis and research
-            </p>
-          </div>
+        <StatsCards />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-            <Card className="border-2 hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <Upload className="h-8 w-8 lg:h-12 lg:w-12 text-primary mb-2" />
-                <CardTitle className="text-lg lg:text-xl xl:text-2xl">Document Upload</CardTitle>
-                <CardDescription className="text-sm lg:text-base xl:text-lg">
-                  Securely upload and process various document formats including PDFs, Word documents, and more
-                </CardDescription>
-              </CardHeader>
-            </Card>
+        <Tabs defaultValue="overview" className="space-y-6 sm:space-y-12 lg:space-y-24pt">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 p-1 sm:p-2 lg:p-4pt bg-card/50 backdrop-blur-sm">
+            <TabsTrigger value="overview" className="flex items-center space-x-2 sm:space-x-4 lg:space-x-8pt px-3 sm:px-8 lg:px-16pt py-2 sm:py-6 lg:py-12pt transition-all duration-300 hover-lift">
+              <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="text-xs sm:text-sm lg:text-base font-medium">{t('tabs.overview')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="upload" className="flex items-center space-x-2 sm:space-x-4 lg:space-x-8pt px-3 sm:px-8 lg:px-16pt py-2 sm:py-6 lg:py-12pt transition-all duration-300 hover-lift">
+              <Upload className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="text-xs sm:text-sm lg:text-base font-medium">{t('tabs.upload')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="search" className="flex items-center space-x-2 sm:space-x-4 lg:space-x-8pt px-3 sm:px-8 lg:px-16pt py-2 sm:py-6 lg:py-12pt transition-all duration-300 hover-lift">
+              <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="text-xs sm:text-sm lg:text-base font-medium">{t('tabs.aiAnalyst')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="analyses" className="flex items-center space-x-2 sm:space-x-4 lg:space-x-8pt px-3 sm:px-8 lg:px-16pt py-2 sm:py-6 lg:py-12pt transition-all duration-300 hover-lift">
+              <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="text-xs sm:text-sm lg:text-base font-medium">{t('tabs.analyses')}</span>
+            </TabsTrigger>
+          </TabsList>
 
-            <Card className="border-2 hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <MessageSquare className="h-8 w-8 lg:h-12 lg:w-12 text-primary mb-2" />
-                <CardTitle className="text-lg lg:text-xl xl:text-2xl">AI Analysis</CardTitle>
-                <CardDescription className="text-sm lg:text-base xl:text-lg">
-                  Leverage advanced AI to analyze documents, extract insights, and answer complex questions
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="border-2 hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <BarChart3 className="h-8 w-8 lg:h-12 lg:w-12 text-primary mb-2" />
-                <CardTitle className="text-lg lg:text-xl xl:text-2xl">Analytics Dashboard</CardTitle>
-                <CardDescription className="text-sm lg:text-base xl:text-lg">
-                  Comprehensive dashboard with statistics, trends, and performance metrics
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="border-2 hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <Shield className="h-8 w-8 lg:h-12 lg:w-12 text-primary mb-2" />
-                <CardTitle className="text-lg lg:text-xl xl:text-2xl">Secure & Compliant</CardTitle>
-                <CardDescription className="text-sm lg:text-base xl:text-lg">
-                  Built with government-grade security and compliance standards
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="border-2 hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <FileText className="h-8 w-8 lg:h-12 lg:w-12 text-primary mb-2" />
-                <CardTitle className="text-lg lg:text-xl xl:text-2xl">Document Management</CardTitle>
-                <CardDescription className="text-sm lg:text-base xl:text-lg">
-                  Organize, search, and manage your document library with ease
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="border-2 hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <Zap className="h-8 w-8 lg:h-12 lg:w-12 text-primary mb-2" />
-                <CardTitle className="text-lg lg:text-xl xl:text-2xl">Fast Processing</CardTitle>
-                <CardDescription className="text-sm lg:text-base xl:text-lg">
-                  Quick document processing and real-time analysis results
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-        </section>
-
-        {/* How it Works Section */}
-        <section className="py-12 lg:py-20">
-          <div className="text-center mb-12 lg:mb-16">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-foreground mb-4">
-              How It Works
-            </h2>
-            <p className="text-base sm:text-lg lg:text-xl xl:text-2xl text-muted-foreground max-w-3xl mx-auto">
-              Simple steps to get started with document analysis
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
-            <div className="text-center">
-              <div className="bg-primary/10 rounded-full w-16 h-16 lg:w-20 lg:h-20 flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl lg:text-3xl font-bold text-primary">1</span>
+          <TabsContent value="overview" className="space-y-6 sm:space-y-12 lg:space-y-24pt">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-12 lg:gap-32pt">
+              <div className="space-y-6 sm:space-y-12 lg:space-y-24pt hover-lift">
+                <DocumentUpload />
               </div>
-              <h3 className="text-lg lg:text-xl xl:text-2xl font-semibold mb-2">Upload Documents</h3>
-              <p className="text-sm lg:text-base xl:text-lg text-muted-foreground">
-                Securely upload your documents to the platform
-              </p>
-            </div>
-
-            <div className="text-center">
-              <div className="bg-primary/10 rounded-full w-16 h-16 lg:w-20 lg:h-20 flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl lg:text-3xl font-bold text-primary">2</span>
+              <div className="space-y-6 sm:space-y-12 lg:space-y-24pt hover-lift">
+                <RecentAnalyses />
               </div>
-              <h3 className="text-lg lg:text-xl xl:text-2xl font-semibold mb-2">AI Analysis</h3>
-              <p className="text-sm lg:text-base xl:text-lg text-muted-foreground">
-                Our AI processes and analyzes your documents
-              </p>
             </div>
+          </TabsContent>
 
-            <div className="text-center">
-              <div className="bg-primary/10 rounded-full w-16 h-16 lg:w-20 lg:h-20 flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl lg:text-3xl font-bold text-primary">3</span>
+          <TabsContent value="upload" className="space-y-6 sm:space-y-12 lg:space-y-24pt">
+            <DocumentUpload />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-12 lg:gap-32pt">
+              <div className="bg-muted/50 p-4 sm:p-8 lg:p-24pt rounded-lg hover-lift transition-all duration-400">
+                <h3 className="text-base sm:text-lg lg:text-xl font-medium mb-4 sm:mb-8 lg:mb-16pt">{t('dashboard.uploadGuidelines')}</h3>
+                <ul className="space-y-2 sm:space-y-4 lg:space-y-8pt text-sm sm:text-base lg:text-body text-muted-foreground">
+                  <li>{t('upload.maxFileSize')}</li>
+                  <li>{t('upload.supportedFormats')}</li>
+                  <li>{t('upload.preferredDocs')}</li>
+                  <li>{t('upload.autoProcessing')}</li>
+                </ul>
               </div>
-              <h3 className="text-lg lg:text-xl xl:text-2xl font-semibold mb-2">Get Insights</h3>
-              <p className="text-sm lg:text-base xl:text-lg text-muted-foreground">
-                Access detailed analysis and insights
-              </p>
+              <div className="bg-muted/50 p-4 sm:p-8 lg:p-24pt rounded-lg hover-lift transition-all duration-400">
+                <h3 className="text-base sm:text-lg lg:text-xl font-medium mb-4 sm:mb-8 lg:mb-16pt">{t('dashboard.processingStatus')}</h3>
+                <div className="space-y-3 sm:space-y-6 lg:space-y-12pt text-sm sm:text-base lg:text-body">
+                  <div className="flex items-center justify-between">
+                    <span>{t('processing.docParsing')}</span>
+                    <span className="text-primary">{t('processing.complete')}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>{t('processing.vectorIndexing')}</span>
+                    <span className="text-primary">{t('processing.complete')}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>{t('processing.metadataExtraction')}</span>
+                    <span className="text-primary">{t('processing.complete')}</span>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </section>
+          </TabsContent>
 
-        {/* CTA Section */}
-        <section className="py-12 lg:py-20 text-center">
-          <div className="bg-muted/50 rounded-lg p-8 lg:p-12">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-foreground mb-4">
-              Ready to Get Started?
-            </h2>
-            <p className="text-base sm:text-lg lg:text-xl xl:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Access the dashboard to begin uploading and analyzing your documents
-            </p>
-            <Button onClick={() => navigate('/dashboard')} size="lg" className="canada-btn-primary text-base lg:text-lg px-8 py-4">
-              Access Dashboard
-            </Button>
-          </div>
-        </section>
+          <TabsContent value="search" className="space-y-6 sm:space-y-12 lg:space-y-24pt">
+            <ChatbotInterface />
+            <div className="bg-muted/50 p-4 sm:p-8 lg:p-24pt rounded-lg hover-lift transition-all duration-400">
+              <h3 className="text-base sm:text-lg lg:text-xl font-medium mb-4 sm:mb-8 lg:mb-16pt">{t('dashboard.aiAnalystFeatures')}</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8 lg:gap-16pt text-sm sm:text-base lg:text-body text-muted-foreground">
+                <div>
+                  <h4 className="text-sm sm:text-base lg:text-lg font-medium text-foreground mb-2 sm:mb-4 lg:mb-8pt">{t('dashboard.documentAnalysis')}</h4>
+                  <ul className="space-y-1 sm:space-y-2 lg:space-y-4pt">
+                    <li>{t('ai.searchesUploaded')}</li>
+                    <li>{t('ai.sourceReferences')}</li>
+                    <li>{t('ai.contextualAnalysis')}</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="text-sm sm:text-base lg:text-lg font-medium text-foreground mb-2 sm:mb-4 lg:mb-8pt">{t('dashboard.onlineResearch')}</h4>
+                  <ul className="space-y-1 sm:space-y-2 lg:space-y-4pt">
+                    <li>{t('ai.searchesOnline')}</li>
+                    <li>{t('ai.currentRegulations')}</li>
+                    <li>{t('ai.bestPractices')}</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="analyses" className="space-y-6 sm:space-y-12 lg:space-y-24pt">
+            <RecentAnalyses />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-12 lg:gap-24pt">
+              <div className="bg-muted/50 p-4 sm:p-8 lg:p-24pt rounded-lg hover-lift transition-all duration-400">
+                <h3 className="text-base sm:text-lg lg:text-xl font-medium mb-4 sm:mb-8 lg:mb-16pt">{t('dashboard.analysisTypes')}</h3>
+                <ul className="space-y-2 sm:space-y-4 lg:space-y-8pt text-sm sm:text-base lg:text-body text-muted-foreground">
+                  <li>{t('analysis.impactAssessment')}</li>
+                  <li>{t('analysis.comparativeAnalysis')}</li>
+                  <li>{t('analysis.complianceReview')}</li>
+                  <li>{t('analysis.riskAssessment')}</li>
+                </ul>
+              </div>
+              <div className="bg-muted/50 p-4 sm:p-8 lg:p-24pt rounded-lg hover-lift transition-all duration-400">
+                <h3 className="text-base sm:text-lg lg:text-xl font-medium mb-4 sm:mb-8 lg:mb-16pt">{t('dashboard.confidenceLevels')}</h3>
+                <div className="space-y-2 sm:space-y-4 lg:space-y-8pt text-sm sm:text-base lg:text-body">
+                  <div className="flex items-center justify-between">
+                    <span>{t('confidence.high')}</span>
+                    <span className="text-green-600">●</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>{t('confidence.medium')}</span>
+                    <span className="text-yellow-600">●</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>{t('confidence.low')}</span>
+                    <span className="text-red-600">●</span>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-muted/50 p-4 sm:p-8 lg:p-24pt rounded-lg hover-lift transition-all duration-400">
+                <h3 className="text-base sm:text-lg lg:text-xl font-medium mb-4 sm:mb-8 lg:mb-16pt">{t('dashboard.verification')}</h3>
+                <ul className="space-y-2 sm:space-y-4 lg:space-y-8pt text-sm sm:text-base lg:text-body text-muted-foreground">
+                  <li>{t('verification.humanReview')}</li>
+                  <li>{t('verification.sourceTraceability')}</li>
+                  <li>{t('verification.qualityScoring')}</li>
+                  <li>{t('verification.auditTrail')}</li>
+                </ul>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </main>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;

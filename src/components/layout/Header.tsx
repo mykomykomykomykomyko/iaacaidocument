@@ -71,7 +71,7 @@ export const Header = () => {
                 asChild
                 className="text-white hover:text-white hover:bg-primary text-xs sm:text-sm"
               >
-                <Link to="/dashboard">
+                <Link to="/">
                   <Home className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">{t('header.dashboard')}</span>
                 </Link>
