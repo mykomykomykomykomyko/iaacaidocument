@@ -151,32 +151,10 @@ serve(async (req) => {
 
     console.log(`Document uploaded successfully with ID: ${document.id}`);
 
-    // Trigger analysis function
-    try {
-      console.log('Starting immediate analysis...');
-      
-      const analysisResponse = await supabase.functions.invoke('analyze-document', {
-        body: {
-          document_id: document.id,
-          analysis_type: 'environmental'
-        }
-      });
-      
-      if (analysisResponse.error) {
-        console.error('Analysis invocation failed:', analysisResponse.error);
-      } else {
-        console.log('Analysis started successfully');
-      }
-      
-    } catch (analysisError) {
-      console.error('Failed to trigger analysis:', analysisError);
-      // Don't fail the upload if analysis trigger fails
-    }
-
     return new Response(JSON.stringify({
       success: true,
       document,
-      message: 'Document uploaded and analysis started',
+      message: 'Document uploaded successfully',
       extractedLength: extractedText.length
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

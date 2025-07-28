@@ -61,7 +61,7 @@ export const DocumentUpload = () => {
       setUploadStatus('success');
       toast({
         title: "Upload successful",
-        description: `${data.document.mime_type.split('/')[1].toUpperCase()} file processed successfully. AI analysis is running - check Recent Analyses for results.`
+        description: `Document uploaded successfully. Use "Analyze" button to start AI analysis.`
       });
 
       // Reset form
@@ -73,7 +73,8 @@ export const DocumentUpload = () => {
       const fileInput = document.getElementById('file-upload') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
 
-      // Don't reload the page - let React Query handle refreshing the data
+      // Refresh documents list
+      refetchDocuments();
 
     } catch (error) {
       console.error('Upload error:', error);
@@ -182,7 +183,7 @@ export const DocumentUpload = () => {
           <span>
             {uploadStatus === 'uploading' ? 'Uploading...' : 
              uploadStatus === 'success' ? 'Upload Complete!' :
-             uploadStatus === 'error' ? 'Upload Failed' : 'Upload & Analyze'}
+             uploadStatus === 'error' ? 'Upload Failed' : 'Upload Document'}
           </span>
         </Button>
 

@@ -48,7 +48,7 @@ const PersonasManagement = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Form state
+  // Form state - memoized to prevent unnecessary re-renders
   const [formData, setFormData] = useState({
     name: "",
     description: "",
