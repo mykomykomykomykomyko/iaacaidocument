@@ -149,7 +149,12 @@ Please provide a comprehensive analysis in markdown format with the following st
 3. **Impact Assessment Summary**
 4. **Mitigation Measures**
 5. **Recommendations**
-6. **Confidence Assessment**
+6. **Confidence Assessment** - Rate your confidence in this analysis from 0-100%
+
+At the end of your analysis, provide:
+
+CONFIDENCE_SCORE: [0-100]
+KEY_FINDINGS: [Finding 1], [Finding 2], [Finding 3]
 
 Format your response using proper markdown headers and bullet points for clarity.`;
 
@@ -176,13 +181,43 @@ Format your response using proper markdown headers and bullet points for clarity
     
     console.log('Gemini analysis completed');
 
+    // Extract confidence score and key findings from the analysis
+    let confidenceScore = 0.75; // Default fallback
+    let keyFindings = ['Analysis completed', 'Review required'];
+    
+    try {
+      // Extract confidence score
+      const confidenceMatch = analysisContent.match(/CONFIDENCE_SCORE:\s*(\d+)/i);
+      if (confidenceMatch) {
+        confidenceScore = Math.min(100, Math.max(0, parseInt(confidenceMatch[1]))) / 100;
+      }
+      
+      // Extract key findings
+      const findingsMatch = analysisContent.match(/KEY_FINDINGS:\s*(.+)/i);
+      if (findingsMatch) {
+        keyFindings = findingsMatch[1]
+          .split(',')
+          .map(finding => finding.trim())
+          .filter(finding => finding.length > 0)
+          .slice(0, 5); // Limit to 5 findings
+      }
+    } catch (extractionError) {
+      console.warn('Failed to extract metadata from analysis:', extractionError);
+    }
+
+    // Clean up the analysis content by removing the metadata lines
+    const cleanAnalysisContent = analysisContent
+      .replace(/CONFIDENCE_SCORE:\s*\d+/gi, '')
+      .replace(/KEY_FINDINGS:\s*.+/gi, '')
+      .trim();
+
     // Update analysis with results
     const { error: updateError } = await supabase
       .from('analyses')
       .update({
-        analysis_content: analysisContent,
-        key_findings: ['Environmental impact identified', 'Mitigation required', 'Further assessment needed'],
-        confidence_score: 0.85,
+        analysis_content: cleanAnalysisContent,
+        key_findings: keyFindings,
+        confidence_score: confidenceScore,
         status: 'completed'
       })
       .eq('id', analysis.id);
