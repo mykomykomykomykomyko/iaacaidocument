@@ -14,14 +14,14 @@ interface StatCardProps {
 const StatCard = ({ title, value, icon, description }: StatCardProps) => (
   <Card>
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-      <CardTitle className="text-sm font-medium text-muted-foreground">
+      <CardTitle className="text-base sm:text-lg lg:text-xl font-medium text-muted-foreground">
         {title}
       </CardTitle>
       <div className="text-primary">{icon}</div>
     </CardHeader>
     <CardContent>
-      <div className="text-2xl font-bold text-foreground">{value}</div>
-      <p className="text-xs text-muted-foreground">{description}</p>
+      <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground">{value}</div>
+      <p className="text-sm sm:text-base lg:text-lg text-muted-foreground">{description}</p>
     </CardContent>
   </Card>
 );
@@ -75,25 +75,25 @@ export const StatsCards = () => {
       <StatCard
         title={t('stats.documentsProcessed')}
         value={documentsCount?.toString() || "0"}
-        icon={<FileText className="h-4 w-4" />}
+        icon={<FileText className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7" />}
         description={t('stats.documentsDesc')}
       />
       <StatCard
         title={t('stats.aiAnalyses')}
         value={analysesCount?.toString() || "0"}
-        icon={<Search className="h-4 w-4" />}
+        icon={<Search className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7" />}
         description={t('stats.aiAnalysesDesc')}
       />
       <StatCard
         title={t('stats.fileFormats')}
         value={analysisTypesCount?.toString() || "0"}
-        icon={<Users className="h-4 w-4" />}
+        icon={<Users className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7" />}
         description={t('stats.fileFormatsDesc')}
       />
       <StatCard
         title={t('stats.completedAnalyses')}
         value={verifiedCount?.toString() || "0"}
-        icon={<CheckCircle className="h-4 w-4" />}
+        icon={<CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7" />}
         description={t('stats.completedDesc')}
       />
     </div>
