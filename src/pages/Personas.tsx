@@ -27,6 +27,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Header } from "@/components/layout/Header";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Persona {
   id: string;
@@ -49,6 +50,7 @@ const PersonasManagement = () => {
   const [aiPrompt, setAiPrompt] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { t } = useLanguage();
 
   // Form state - memoized to prevent unnecessary re-renders
   const [formData, setFormData] = useState({

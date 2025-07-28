@@ -21,21 +21,75 @@ const translations = {
     'header.english': 'English',
     
     // Dashboard
-    'dashboard.welcome': 'Welcome to the AI Document Analysis Tool',
-    'dashboard.description': 'Upload and analyze environmental assessment documents with AI-powered insights',
-    'dashboard.recentAnalyses': 'Recent Analyses',
-    'dashboard.uploadDocument': 'Upload Document',
-    'dashboard.searchDocuments': 'Search Documents',
-    'dashboard.viewAll': 'View All',
+    'dashboard.title': 'AI Document Analysis Dashboard',
+    'dashboard.subtitle': 'Analyze Impact Assessment documents with specialized AI personas and semantic search',
+    'dashboard.overview': 'Overview',
+    'dashboard.upload': 'Upload',
+    'dashboard.aiAnalyst': 'AI Analyst',
+    'dashboard.analyses': 'Analyses',
+    'dashboard.uploadGuidelines': 'Upload Guidelines',
+    'dashboard.processingStatus': 'Processing Status',
+    'dashboard.aiAnalystFeatures': 'AI Analyst Features',
+    'dashboard.documentAnalysis': 'Document Analysis',
+    'dashboard.onlineResearch': 'Online Research',
+    'dashboard.analysisTypes': 'Analysis Types',
+    'dashboard.confidenceLevels': 'Confidence Levels',
+    'dashboard.verification': 'Verification',
     
-    // PDF Processing
-    'pdf.upload': 'Upload PDF',
-    'pdf.processing': 'Processing...',
-    'pdf.analyze': 'Analyze with AI',
-    'pdf.pages': 'pages',
-    'pdf.selectAll': 'Select All',
-    'pdf.download': 'Download',
-    'pdf.results': 'Analysis Results',
+    // Upload Guidelines
+    'upload.maxFileSize': '• Maximum file size: 500MB',
+    'upload.supportedFormats': '• Supported formats: PDF, HTML, DOC/DOCX',
+    'upload.preferredDocs': '• Environmental assessment documents preferred',
+    'upload.autoProcessing': '• Files are automatically processed for semantic search',
+    
+    // Processing Status
+    'processing.docParsing': 'Document Parsing',
+    'processing.vectorIndexing': 'Vector Indexing',
+    'processing.metadataExtraction': 'Metadata Extraction',
+    'processing.complete': '✓ Complete',
+    
+    // AI Features
+    'ai.searchesUploaded': '• Searches through your uploaded documents first',
+    'ai.sourceReferences': '• Provides source references from your files',
+    'ai.contextualAnalysis': '• Contextual analysis based on your data',
+    'ai.searchesOnline': '• Searches online when documents lack information',
+    'ai.currentRegulations': '• Current environmental regulations and standards',
+    'ai.bestPractices': '• Best practices and industry guidelines',
+    
+    // Analysis Types
+    'analysis.impactAssessment': '• Impact Assessment',
+    'analysis.comparativeAnalysis': '• Comparative Analysis',
+    'analysis.complianceReview': '• Compliance Review',
+    'analysis.riskAssessment': '• Risk Assessment',
+    
+    // Confidence Levels
+    'confidence.high': 'High (90%+)',
+    'confidence.medium': 'Medium (75-89%)',
+    'confidence.low': 'Low (<75%)',
+    
+    // Verification
+    'verification.humanReview': '• Human expert review',
+    'verification.sourceTraceability': '• Source traceability',
+    'verification.qualityScoring': '• Quality scoring',
+    'verification.auditTrail': '• Audit trail',
+    
+    // Personas Page
+    'personas.title': 'AI Analysis Personas',
+    'personas.subtitle': 'Manage specialized AI personas for document analysis',
+    'personas.aiGenerate': 'AI Generate',
+    'personas.createNew': 'Create New Persona',
+    'personas.personaName': 'Persona Name *',
+    'personas.avatarEmoji': 'Avatar Emoji',
+    'personas.description': 'Description',
+    'personas.expertiseAreas': 'Expertise Areas (comma-separated)',
+    'personas.systemPrompt': 'System Prompt *',
+    'personas.generateWithAI': 'Generate with AI',
+    'personas.generating': 'Generating...',
+    'personas.createPersona': 'Create Persona',
+    'personas.editPersona': 'Edit Persona',
+    'personas.systemPromptLabel': 'System Prompt:',
+    'personas.noDescription': 'No description provided',
+    'personas.default': 'Default',
     
     // Common
     'common.save': 'Save',
@@ -60,21 +114,75 @@ const translations = {
     'header.english': 'Anglais',
     
     // Dashboard
-    'dashboard.welcome': 'Bienvenue à l\'outil d\'analyse de documents par IA',
-    'dashboard.description': 'Téléchargez et analysez des documents d\'évaluation environnementale avec des insights alimentés par l\'IA',
-    'dashboard.recentAnalyses': 'Analyses récentes',
-    'dashboard.uploadDocument': 'Télécharger un document',
-    'dashboard.searchDocuments': 'Rechercher des documents',
-    'dashboard.viewAll': 'Voir tout',
+    'dashboard.title': 'Tableau de bord d\'analyse de documents par IA',
+    'dashboard.subtitle': 'Analysez les documents d\'évaluation d\'impact avec des personas IA spécialisés et une recherche sémantique',
+    'dashboard.overview': 'Aperçu',
+    'dashboard.upload': 'Télécharger',
+    'dashboard.aiAnalyst': 'Analyste IA',
+    'dashboard.analyses': 'Analyses',
+    'dashboard.uploadGuidelines': 'Directives de téléchargement',
+    'dashboard.processingStatus': 'État du traitement',
+    'dashboard.aiAnalystFeatures': 'Fonctionnalités de l\'analyste IA',
+    'dashboard.documentAnalysis': 'Analyse de documents',
+    'dashboard.onlineResearch': 'Recherche en ligne',
+    'dashboard.analysisTypes': 'Types d\'analyse',
+    'dashboard.confidenceLevels': 'Niveaux de confiance',
+    'dashboard.verification': 'Vérification',
     
-    // PDF Processing
-    'pdf.upload': 'Télécharger PDF',
-    'pdf.processing': 'Traitement en cours...',
-    'pdf.analyze': 'Analyser avec IA',
-    'pdf.pages': 'pages',
-    'pdf.selectAll': 'Tout sélectionner',
-    'pdf.download': 'Télécharger',
-    'pdf.results': 'Résultats d\'analyse',
+    // Upload Guidelines
+    'upload.maxFileSize': '• Taille maximale de fichier : 500 Mo',
+    'upload.supportedFormats': '• Formats pris en charge : PDF, HTML, DOC/DOCX',
+    'upload.preferredDocs': '• Documents d\'évaluation environnementale privilégiés',
+    'upload.autoProcessing': '• Les fichiers sont automatiquement traités pour la recherche sémantique',
+    
+    // Processing Status
+    'processing.docParsing': 'Analyse du document',
+    'processing.vectorIndexing': 'Indexation vectorielle',
+    'processing.metadataExtraction': 'Extraction des métadonnées',
+    'processing.complete': '✓ Terminé',
+    
+    // AI Features
+    'ai.searchesUploaded': '• Recherche d\'abord dans vos documents téléchargés',
+    'ai.sourceReferences': '• Fournit des références sources de vos fichiers',
+    'ai.contextualAnalysis': '• Analyse contextuelle basée sur vos données',
+    'ai.searchesOnline': '• Recherche en ligne quand les documents manquent d\'informations',
+    'ai.currentRegulations': '• Réglementations et normes environnementales actuelles',
+    'ai.bestPractices': '• Meilleures pratiques et directives de l\'industrie',
+    
+    // Analysis Types
+    'analysis.impactAssessment': '• Évaluation d\'impact',
+    'analysis.comparativeAnalysis': '• Analyse comparative',
+    'analysis.complianceReview': '• Examen de conformité',
+    'analysis.riskAssessment': '• Évaluation des risques',
+    
+    // Confidence Levels
+    'confidence.high': 'Élevé (90%+)',
+    'confidence.medium': 'Moyen (75-89%)',
+    'confidence.low': 'Faible (<75%)',
+    
+    // Verification
+    'verification.humanReview': '• Examen par un expert humain',
+    'verification.sourceTraceability': '• Traçabilité des sources',
+    'verification.qualityScoring': '• Notation de qualité',
+    'verification.auditTrail': '• Piste d\'audit',
+    
+    // Personas Page
+    'personas.title': 'Personas d\'analyse IA',
+    'personas.subtitle': 'Gérer les personas IA spécialisés pour l\'analyse de documents',
+    'personas.aiGenerate': 'Générer par IA',
+    'personas.createNew': 'Créer un nouveau persona',
+    'personas.personaName': 'Nom du persona *',
+    'personas.avatarEmoji': 'Emoji d\'avatar',
+    'personas.description': 'Description',
+    'personas.expertiseAreas': 'Domaines d\'expertise (séparés par des virgules)',
+    'personas.systemPrompt': 'Invite système *',
+    'personas.generateWithAI': 'Générer avec IA',
+    'personas.generating': 'Génération en cours...',
+    'personas.createPersona': 'Créer un persona',
+    'personas.editPersona': 'Modifier le persona',
+    'personas.systemPromptLabel': 'Invite système :',
+    'personas.noDescription': 'Aucune description fournie',
+    'personas.default': 'Par défaut',
     
     // Common
     'common.save': 'Enregistrer',
