@@ -17,7 +17,7 @@ const Index = () => {
         <section className="py-12 lg:py-20 text-center">
           <div className="space-y-6 lg:space-y-8">
             <h1 className="text-3xl sm:text-4xl lg:text-6xl xl:text-7xl font-bold text-foreground canada-heading">
-              InsightStream IAAC
+              IAAC.AI (iaac.ai)
             </h1>
             <p className="text-lg sm:text-xl lg:text-2xl xl:text-3xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
               Advanced AI-powered document analysis and research tool for the Government of Canada
