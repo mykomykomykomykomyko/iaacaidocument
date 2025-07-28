@@ -28,6 +28,7 @@ export const DocumentUpload = () => {
   const [isPlainText, setIsPlainText] = useState(false);
   const [plainTextContent, setPlainTextContent] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [isUploading, setIsUploading] = useState(false);
@@ -43,11 +44,14 @@ export const DocumentUpload = () => {
   const { toast } = useToast();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      if (!title) {
-        setTitle(selectedFile.name.replace(/\.[^/.]+$/, ""));
+    const selectedFiles = Array.from(e.target.files || []);
+    if (selectedFiles.length > 0) {
+      setFiles(selectedFiles);
+      setFile(selectedFiles[0]); // Keep single file for backward compatibility
+      if (!title && selectedFiles.length === 1) {
+        setTitle(selectedFiles[0].name.replace(/\.[^/.]+$/, ""));
+      } else if (!title && selectedFiles.length > 1) {
+        setTitle(`Bulk Upload - ${selectedFiles.length} files`);
       }
     }
   };
@@ -63,10 +67,10 @@ export const DocumentUpload = () => {
         return;
       }
     } else {
-      if (!file) {
+      if (files.length === 0) {
         toast({
-          title: "No file selected", 
-          description: "Please select a file to upload",
+          title: "No files selected", 
+          description: "Please select one or more files to upload",
           variant: "destructive"
         });
         return;
@@ -76,9 +80,11 @@ export const DocumentUpload = () => {
     setIsUploading(true);
     setUploadStatus('uploading');
 
+    const uploadedDocuments = [];
+    let successCount = 0;
+    let failCount = 0;
+
     try {
-      let uploadedDocument;
-      
       if (isPlainText) {
         // Handle plain text upload by creating document directly
         const { data, error } = await supabase
@@ -98,56 +104,72 @@ export const DocumentUpload = () => {
           .single();
 
         if (error) throw error;
-        uploadedDocument = data;
+        uploadedDocuments.push(data);
+        successCount = 1;
       } else {
-        // Handle file upload
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('title', title);
-        formData.append('description', description);
+        // Handle bulk file upload
+        for (let i = 0; i < files.length; i++) {
+          const currentFile = files[i];
+          try {
+            const formData = new FormData();
+            formData.append('file', currentFile);
+            formData.append('title', files.length === 1 ? title : `${title} - ${currentFile.name.replace(/\.[^/.]+$/, "")}`);
+            formData.append('description', description);
 
-        const { data, error } = await supabase.functions.invoke('upload-document', {
-          body: formData
-        });
+            const { data, error } = await supabase.functions.invoke('upload-document', {
+              body: formData
+            });
 
-        if (error) throw error;
-        uploadedDocument = data?.document;
+            if (error) throw error;
+            uploadedDocuments.push(data?.document);
+            successCount++;
+          } catch (error) {
+            console.error(`Upload error for file ${currentFile.name}:`, error);
+            failCount++;
+          }
+        }
       }
 
       setUploadStatus('success');
       
       // Auto-analyze if checkbox is checked
-      if (autoAnalyze && uploadedDocument?.id) {
-        try {
-          const analysisResult = await triggerAnalysisForDocument(uploadedDocument.id);
-          if (analysisResult.success) {
-            toast({
-              title: "Upload & Analysis Started",
-              description: "Document uploaded and analysis has been started automatically."
-            });
-          } else {
-            toast({
-              title: "Upload successful, Analysis failed",
-              description: "Document uploaded but auto-analysis failed. Use 'Analyze' button manually.",
-              variant: "destructive"
-            });
+      if (autoAnalyze && uploadedDocuments.length > 0) {
+        let analysisSuccessCount = 0;
+        let analysisFailCount = 0;
+        
+        for (const doc of uploadedDocuments) {
+          if (doc?.id) {
+            try {
+              const analysisResult = await triggerAnalysisForDocument(doc.id);
+              if (analysisResult.success) {
+                analysisSuccessCount++;
+              } else {
+                analysisFailCount++;
+              }
+            } catch (error) {
+              analysisFailCount++;
+            }
           }
-        } catch (error) {
+        }
+        
+        if (successCount > 0) {
           toast({
-            title: "Upload successful, Analysis failed",
-            description: "Document uploaded but auto-analysis failed. Use 'Analyze' button manually.",
-            variant: "destructive"
+            title: `Bulk Upload ${failCount > 0 ? 'Partially ' : ''}Complete`,
+            description: `${successCount} file(s) uploaded successfully${failCount > 0 ? `, ${failCount} failed` : ''}. ${analysisSuccessCount} analysis(es) started${analysisFailCount > 0 ? `, ${analysisFailCount} analysis(es) failed` : ''}.`
           });
         }
       } else {
-        toast({
-          title: "Upload successful",
-          description: autoAnalyze ? "Document uploaded successfully." : `Document uploaded successfully. Use "Analyze" button to start AI analysis.`
-        });
+        if (successCount > 0) {
+          toast({
+            title: `Bulk Upload ${failCount > 0 ? 'Partially ' : ''}Complete`,
+            description: `${successCount} file(s) uploaded successfully${failCount > 0 ? `, ${failCount} failed` : ''}. Use "Analyze" buttons to start AI analysis.`
+          });
+        }
       }
 
       // Reset form
       setFile(null);
+      setFiles([]);
       setTitle("");
       setDescription("");
       setPlainTextContent("");
@@ -164,7 +186,7 @@ export const DocumentUpload = () => {
       setUploadStatus('error');
       toast({
         title: "Upload failed", 
-        description: error.message || "Failed to upload document",
+        description: error.message || "Failed to upload files",
         variant: "destructive"
       });
     } finally {
@@ -302,18 +324,34 @@ export const DocumentUpload = () => {
           // File Upload Mode
           <>
             <div className="space-y-8pt">
-              <Label htmlFor="file-upload">Select Document</Label>
+              <Label htmlFor="file-upload">Select Documents (Multiple files supported)</Label>
               <Input
                 id="file-upload"
                 type="file"
                 accept=".html,.htm,.xls,.xlsx,.txt,.pdf"
                 onChange={handleFileChange}
+                multiple
                 className="file:mr-8pt file:py-8pt file:px-12pt file:rounded-lg file:border-0 file:text-sm file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 file:cursor-pointer cursor-pointer"
               />
-              {file && (
-                <p className="text-body text-muted-foreground">
-                  Selected: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                </p>
+              {files.length > 0 && (
+                <div className="space-y-4pt">
+                  <p className="text-body text-muted-foreground font-medium">
+                    Selected {files.length} file(s):
+                  </p>
+                  <div className="max-h-32 overflow-y-auto space-y-2pt">
+                    {files.map((f, index) => (
+                      <div key={index} className="flex justify-between items-center text-sm p-8pt bg-muted/50 rounded">
+                        <span className="truncate">{f.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {(f.size / 1024 / 1024).toFixed(2)} MB
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Total size: {(files.reduce((sum, f) => sum + f.size, 0) / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                </div>
               )}
             </div>
           </>
@@ -348,22 +386,23 @@ export const DocumentUpload = () => {
             onCheckedChange={(checked) => setAutoAnalyze(checked === true)}
           />
           <Label htmlFor="auto-analyze" className="text-body cursor-pointer">
-            Automatically analyze document after upload
+            Automatically analyze {files.length > 1 ? 'all documents' : 'document'} after upload
           </Label>
           <Sparkles className="h-4 w-4 text-primary" />
         </div>
 
         <Button 
           onClick={handleUpload}
-          disabled={(!file && !isPlainText) || (isPlainText && !plainTextContent.trim()) || isUploading}
+          disabled={(!files.length && !isPlainText) || (isPlainText && !plainTextContent.trim()) || isUploading}
           className="w-full gradient-btn flex items-center space-x-8pt"
         >
           {getStatusIcon()}
           <span>
-             {uploadStatus === 'uploading' ? 'Uploading...' : 
+             {uploadStatus === 'uploading' ? `Uploading ${files.length > 1 ? `${files.length} files` : 'file'}...` : 
               uploadStatus === 'success' ? 'Upload Complete!' :
               uploadStatus === 'error' ? 'Upload Failed' : 
-              isPlainText ? 'Create Text Document' : 'Upload Document'}
+              isPlainText ? 'Create Text Document' : 
+              files.length > 1 ? `Upload ${files.length} Documents` : 'Upload Document'}
           </span>
         </Button>
 
