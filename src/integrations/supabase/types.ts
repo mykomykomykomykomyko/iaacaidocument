@@ -14,7 +14,174 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      analyses: {
+        Row: {
+          completed_at: string | null
+          confidence_score: number | null
+          created_at: string
+          document_id: string
+          id: string
+          key_findings: Json | null
+          persona_id: string
+          source_count: number | null
+          source_references: Json | null
+          status: string | null
+          summary: string | null
+          title: string
+          topic: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          document_id: string
+          id?: string
+          key_findings?: Json | null
+          persona_id: string
+          source_count?: number | null
+          source_references?: Json | null
+          status?: string | null
+          summary?: string | null
+          title: string
+          topic: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          document_id?: string
+          id?: string
+          key_findings?: Json | null
+          persona_id?: string
+          source_count?: number | null
+          source_references?: Json | null
+          status?: string | null
+          summary?: string | null
+          title?: string
+          topic?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analyses_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analyses_persona_id_fkey"
+            columns: ["persona_id"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documents: {
+        Row: {
+          file_name: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          processed_at: string | null
+          source_registry: string | null
+          status: string | null
+          storage_path: string | null
+          title: string
+          uploaded_at: string
+          user_id: string
+        }
+        Insert: {
+          file_name: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          processed_at?: string | null
+          source_registry?: string | null
+          status?: string | null
+          storage_path?: string | null
+          title: string
+          uploaded_at?: string
+          user_id: string
+        }
+        Update: {
+          file_name?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          processed_at?: string | null
+          source_registry?: string | null
+          status?: string | null
+          storage_path?: string | null
+          title?: string
+          uploaded_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      personas: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          prompt_template: string | null
+          specialization: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          prompt_template?: string | null
+          specialization: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          prompt_template?: string | null
+          specialization?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          department: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          role: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          department?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          role?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          department?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          role?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
