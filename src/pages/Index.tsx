@@ -160,8 +160,8 @@ const Index = () => {
             <p className="text-base sm:text-lg lg:text-xl xl:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto">
               Access the dashboard to begin uploading and analyzing your documents
             </p>
-            <Button asChild size="lg" className="canada-btn-primary text-base lg:text-lg px-8 py-4">
-              <Link to="/dashboard">Access Dashboard</Link>
+            <Button onClick={() => navigate('/dashboard')} size="lg" className="canada-btn-primary text-base lg:text-lg px-8 py-4">
+              Access Dashboard
             </Button>
           </div>
         </section>
