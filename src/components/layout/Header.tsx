@@ -91,7 +91,7 @@ export const Header = () => {
                 variant={location.pathname === "/personas" ? "default" : "ghost"} 
                 size="sm"
                 asChild
-                className={location.pathname === "/personas" ? "text-white hover:text-white" : "text-white hover:text-white"}
+                className={location.pathname === "/personas" ? "text-white hover:text-white" : "text-white hover:text-white hover:bg-primary"}
               >
                 <Link to="/personas">
                   <User className="h-4 w-4 mr-2" />
