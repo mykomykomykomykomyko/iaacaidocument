@@ -9,18 +9,18 @@
 
 @layer base {
   :root {
-    /* Government of Canada Official Colors */
-    --gc-red: 349 100% 50%;
-    --gc-blue: 207 69% 37%;
-    --gc-navy: 213 45% 23%;
-    --gc-grey: 213 8% 46%;
-    --gc-light-grey: 220 13% 91%;
-    --gc-success: 142 71% 45%;
-    --gc-warning: 38 92% 50%;
-    --gc-error: 0 84% 60%;
+    /* Modern Design System - Alberta Blue Theme */
+    --alberta-blue: 207 79% 36%;
+    --alberta-blue-light: 207 80% 70%;
+    --alberta-blue-pastel: 207 100% 84%;
+    --alberta-blue-gradient: linear-gradient(135deg, hsl(207 79% 36%), hsl(207 80% 50%));
+    --base-light: 210 20% 98%;
+    --base-neutral: 220 13% 91%;
+    --text-primary: 213 45% 23%;
+    --text-secondary: 213 8% 46%;
     
     /* Semantic Design Tokens */
-    --background: 0 0% 100%;
+    --background: 210 20% 98%;
     --foreground: 213 45% 23%;
     
     --card: 0 0% 100%;
@@ -29,16 +29,17 @@
     --popover: 0 0% 100%;
     --popover-foreground: 213 45% 23%;
     
-    --primary: 207 69% 37%;
+    --primary: 207 79% 36%;
     --primary-foreground: 0 0% 100%;
+    --primary-hover: 207 79% 32%;
     
-    --secondary: 220 13% 91%;
+    --secondary: 207 100% 84%;
     --secondary-foreground: 213 45% 23%;
     
     --muted: 220 13% 91%;
     --muted-foreground: 213 8% 46%;
     
-    --accent: 207 69% 37%;
+    --accent: 207 79% 36%;
     --accent-foreground: 0 0% 100%;
     
     --destructive: 0 84% 60%;
@@ -46,7 +47,7 @@
     
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 207 69% 37%;
+    --ring: 207 79% 36%;
     
     --radius: 0.375rem;
 
@@ -112,6 +113,29 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-space;
+    font-size: 1rem;
+    line-height: 1.75;
   }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-space;
+    font-weight: 500;
+    line-height: 1.2;
+  }
+
+  .hover-lift {
+    @apply transition-transform duration-300 ease-smooth hover:translate-y-[-4px];
+  }
+
+  .gradient-btn {
+    background: var(--alberta-blue-gradient);
+    @apply transition-all duration-400 ease-smooth;
+  }
+
+  .gradient-btn:hover {
+    background: linear-gradient(135deg, hsl(207 79% 32%), hsl(207 80% 46%));
+    box-shadow: 0 8px 25px -8px hsl(207 79% 36% / 0.3);
+  }
+}
 }
