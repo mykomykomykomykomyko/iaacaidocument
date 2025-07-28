@@ -258,35 +258,124 @@ async function extractExcelText(fileBuffer: ArrayBuffer, fileName: string): Prom
   return extractedText;
 }
 
-// Improved PDF text extraction
+// Improved PDF text extraction with proper page order
 async function extractPdfText(fileBuffer: ArrayBuffer, fileName: string): Promise<string> {
   try {
     const uint8Array = new Uint8Array(fileBuffer);
-    const textDecoder = new TextDecoder('latin1');
-    const pdfContent = textDecoder.decode(uint8Array);
+    const pdfContent = new TextDecoder('latin1').decode(uint8Array);
     
-    // Extract text between stream objects (basic PDF text extraction)
-    const textMatches = pdfContent.match(/stream[\s\S]*?endstream/g) || [];
-    let pdfText = '';
+    // Find all page objects in correct order
+    const pagePattern = /(\d+)\s+0\s+obj[\s\S]*?\/Type\s*\/Page[\s\S]*?endobj/g;
+    const streamPattern = /BT[\s\S]*?ET/g;
+    const textPattern = /\((.*?)\)\s*Tj/g;
+    const showTextPattern = /\[(.*?)\]\s*TJ/g;
     
-    for (const match of textMatches) {
-      const streamContent = match.replace(/^stream\s*/, '').replace(/\s*endstream$/, '');
-      // Look for readable text patterns
-      const readableText = streamContent.match(/[A-Za-z0-9\s.,!?;:"'-]{10,}/g) || [];
-      pdfText += readableText.join(' ') + ' ';
+    let pages: { pageNum: number, content: string }[] = [];
+    let pageMatch;
+    
+    // Extract pages in order
+    while ((pageMatch = pagePattern.exec(pdfContent)) !== null) {
+      const pageNum = parseInt(pageMatch[1]);
+      const pageContent = pageMatch[0];
+      
+      // Find text streams within this page
+      let pageText = '';
+      let streamMatch;
+      
+      // Look for BT...ET blocks (text objects)
+      while ((streamMatch = streamPattern.exec(pageContent)) !== null) {
+        const textBlock = streamMatch[0];
+        
+        // Extract simple text commands
+        let textMatch;
+        while ((textMatch = textPattern.exec(textBlock)) !== null) {
+          const text = textMatch[1]
+            .replace(/\\n/g, '\n')
+            .replace(/\\r/g, '\r')
+            .replace(/\\t/g, '\t')
+            .replace(/\\(/g, '(')
+            .replace(/\\)/g, ')')
+            .replace(/\\\\/g, '\\');
+          pageText += text + ' ';
+        }
+        
+        // Extract array-based text commands
+        while ((textMatch = showTextPattern.exec(textBlock)) !== null) {
+          const textArray = textMatch[1];
+          // Parse text array format
+          const texts = textArray.match(/\((.*?)\)/g);
+          if (texts) {
+            texts.forEach(text => {
+              const cleanText = text.slice(1, -1) // Remove parentheses
+                .replace(/\\n/g, '\n')
+                .replace(/\\r/g, '\r')
+                .replace(/\\t/g, '\t')
+                .replace(/\\(/g, '(')
+                .replace(/\\)/g, ')')
+                .replace(/\\\\/g, '\\');
+              pageText += cleanText + ' ';
+            });
+          }
+        }
+      }
+      
+      if (pageText.trim()) {
+        pages.push({ pageNum, content: pageText.trim() });
+      }
     }
     
-    const cleanText = pdfText.trim();
+    // Sort pages by page number and combine
+    pages.sort((a, b) => a.pageNum - b.pageNum);
+    let extractedText = pages.map(page => page.content).join('\n\n');
     
-    // If we couldn't extract much readable text, provide descriptive placeholder
-    if (cleanText.length < 100) {
-      return `PDF document: ${fileName}. This document contains environmental assessment information that requires detailed analysis. The PDF may contain scanned content, complex formatting, or protected text.`;
+    // Fallback: Try alternative extraction if no text found
+    if (extractedText.length < 50) {
+      console.log('Primary extraction yielded little text, trying alternative method...');
+      
+      // Look for any readable text patterns in the entire PDF
+      const readableTextPattern = /\(([^)]{3,})\)/g;
+      const foundTexts: string[] = [];
+      let match;
+      
+      while ((match = readableTextPattern.exec(pdfContent)) !== null) {
+        const text = match[1]
+          .replace(/\\n/g, ' ')
+          .replace(/\\r/g, ' ')
+          .replace(/\\t/g, ' ')
+          .replace(/\\(.)/g, '$1')
+          .trim();
+        
+        // Filter out metadata and keep meaningful text
+        if (text.length >= 3 && 
+            !/^[0-9.]+$/.test(text) && 
+            !/^[A-Z]{1,3}$/.test(text) &&
+            !text.includes('Creator') &&
+            !text.includes('Producer') &&
+            !text.includes('ModDate')) {
+          foundTexts.push(text);
+        }
+      }
+      
+      if (foundTexts.length > 0) {
+        extractedText = foundTexts.join(' ');
+      }
     }
     
-    return cleanText.substring(0, 50000); // Limit to 50k characters
+    // Clean up the extracted text
+    extractedText = extractedText
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .replace(/([.!?])\s*([A-Z])/g, '$1\n$2') // Add line breaks after sentences
+      .trim();
+    
+    // If still no meaningful text, provide descriptive placeholder
+    if (extractedText.length < 50) {
+      return `PDF document: ${fileName}. This PDF contains ${Math.ceil(fileBuffer.byteLength / 1024)}KB of data. The document may contain scanned images, complex formatting, or encoded text that requires specialized processing for analysis.`;
+    }
+    
+    return extractedText.substring(0, 100000); // Limit to 100k characters
     
   } catch (error) {
     console.error('PDF text extraction error:', error);
-    return `PDF document: ${fileName}. Text extraction encountered issues, but the document is available for analysis.`;
+    return `PDF document: ${fileName}. Text extraction encountered technical issues. The document is available for analysis but may require manual review.`;
   }
 }
