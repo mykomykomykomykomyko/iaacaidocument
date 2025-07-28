@@ -173,7 +173,7 @@ Please analyze ALL the documents above as a comprehensive set. Look for patterns
   `DOCUMENT TO ANALYZE:
 Title: ${combinedTitle}
 Content: ${combinedContent}`
-}
+}`;
 
     if (custom_instructions) {
       analysisPrompt += `
