@@ -69,8 +69,9 @@ export const Header = () => {
                 variant={location.pathname === "/" ? "default" : "ghost"} 
                 size="sm"
                 asChild
+                className={location.pathname === "/" ? "text-white" : ""}
               >
-                <Link to="/" className="text-white">
+                <Link to="/">
                   <Home className="h-4 w-4 mr-2" />
                   {t('header.dashboard')}
                 </Link>
