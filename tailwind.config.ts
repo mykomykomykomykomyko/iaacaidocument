@@ -19,12 +19,13 @@ export default {
 		},
 		extend: {
 			fontFamily: {
-				'sans': ['Space Grotesk', 'system-ui', 'sans-serif'],
-				'space': ['Space Grotesk', 'system-ui', 'sans-serif'],
+				'sans': ['Noto Sans', 'Arial', 'sans-serif'], /* Canada.ca standard font */
+				'noto': ['Noto Sans', 'Arial', 'sans-serif'],
 			},
 			fontSize: {
-				'body': ['1rem', { lineHeight: '1.75' }],
-				'body-lg': ['1.125rem', { lineHeight: '1.75' }],
+				'body': ['1rem', { lineHeight: '1.65' }], /* Government standard line-height */
+				'body-lg': ['1.125rem', { lineHeight: '1.65' }],
+				'small': ['0.875rem', { lineHeight: '1.5' }],
 			},
 			spacing: {
 				'4pt': '0.25rem',
