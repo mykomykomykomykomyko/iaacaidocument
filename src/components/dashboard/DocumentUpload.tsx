@@ -1,99 +1,167 @@
-import { useState } from 'react';
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Upload, FileText, AlertCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Upload, FileText, CheckCircle, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export const DocumentUpload = () => {
-  const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const [file, setFile] = useState<File | null>(null);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
   const { toast } = useToast();
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      if (!title) {
+        setTitle(selectedFile.name.replace(/\.[^/.]+$/, ""));
+      }
+    }
+  };
 
-    const file = files[0];
-    
-    // Validate file size (500MB limit)
-    if (file.size > 500 * 1024 * 1024) {
+  const handleUpload = async () => {
+    if (!file) {
       toast({
-        title: "File too large",
-        description: "Please select a file smaller than 500MB",
-        variant: "destructive",
+        title: "No file selected",
+        description: "Please select a file to upload",
+        variant: "destructive"
       });
       return;
     }
 
-    // Simulate upload process
-    setUploading(true);
-    setProgress(0);
+    setIsUploading(true);
+    setUploadStatus('uploading');
 
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setUploading(false);
-          toast({
-            title: "Document uploaded successfully",
-            description: `${file.name} is being processed for analysis`,
-          });
-          return 100;
-        }
-        return prev + 10;
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('title', title);
+      formData.append('description', description);
+
+      const { data, error } = await supabase.functions.invoke('upload-document', {
+        body: formData
       });
-    }, 200);
+
+      if (error) throw error;
+
+      setUploadStatus('success');
+      toast({
+        title: "Upload successful",
+        description: "Document has been uploaded and analysis has started"
+      });
+
+      // Reset form
+      setFile(null);
+      setTitle("");
+      setDescription("");
+      
+      // Reset file input
+      const fileInput = document.getElementById('file-upload') as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
+
+    } catch (error) {
+      console.error('Upload error:', error);
+      setUploadStatus('error');
+      toast({
+        title: "Upload failed", 
+        description: error.message || "Failed to upload document",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploading(false);
+      setTimeout(() => setUploadStatus('idle'), 3000);
+    }
+  };
+
+  const getStatusIcon = () => {
+    switch (uploadStatus) {
+      case 'uploading':
+        return <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>;
+      case 'success':
+        return <CheckCircle className="h-5 w-5 text-green-600" />;
+      case 'error':
+        return <AlertCircle className="h-5 w-5 text-red-600" />;
+      default:
+        return <Upload className="h-5 w-5" />;
+    }
   };
 
   return (
-    <Card>
+    <Card className="hover-lift transition-all duration-400">
       <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <Upload className="h-5 w-5" />
-          <span>Document Upload</span>
+        <CardTitle className="flex items-center space-x-8pt">
+          <FileText className="h-5 w-5" />
+          <span>Upload Document</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-          <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-sm text-muted-foreground mb-4">
-            Upload Impact Assessment documents (PDF, HTML, DOC) up to 500MB
-          </p>
-          <input
-            type="file"
-            accept=".pdf,.html,.htm,.doc,.docx"
-            onChange={handleFileUpload}
-            className="hidden"
+      <CardContent className="space-y-16pt">
+        <div className="space-y-8pt">
+          <Label htmlFor="file-upload">Select Document</Label>
+          <Input
             id="file-upload"
+            type="file"
+            accept=".pdf,.doc,.docx,.html,.txt"
+            onChange={handleFileChange}
+            className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:bg-primary file:text-primary-foreground hover:file:bg-primary-hover"
           />
-          <label htmlFor="file-upload">
-            <Button variant="outline" asChild>
-              <span>Choose File</span>
-            </Button>
-          </label>
+          {file && (
+            <p className="text-body text-muted-foreground">
+              Selected: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+            </p>
+          )}
         </div>
 
-        {uploading && (
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Uploading...</span>
-              <span>{progress}%</span>
-            </div>
-            <Progress value={progress} />
-          </div>
-        )}
+        <div className="space-y-8pt">
+          <Label htmlFor="title">Document Title</Label>
+          <Input
+            id="title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Enter document title"
+          />
+        </div>
 
-        <div className="bg-muted p-4 rounded-lg">
-          <div className="flex items-start space-x-2">
+        <div className="space-y-8pt">
+          <Label htmlFor="description">Description (Optional)</Label>
+          <Textarea
+            id="description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Brief description of the document"
+            rows={3}
+          />
+        </div>
+
+        <Button 
+          onClick={handleUpload}
+          disabled={!file || isUploading}
+          className="w-full gradient-btn flex items-center space-x-8pt"
+        >
+          {getStatusIcon()}
+          <span>
+            {uploadStatus === 'uploading' ? 'Uploading...' : 
+             uploadStatus === 'success' ? 'Upload Complete!' :
+             uploadStatus === 'error' ? 'Upload Failed' : 'Upload & Analyze'}
+          </span>
+        </Button>
+
+        <div className="bg-muted/50 p-16pt rounded-lg">
+          <div className="flex items-start space-x-8pt">
             <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5" />
-            <div className="text-xs text-muted-foreground">
-              <p className="font-medium mb-1">Supported Formats:</p>
-              <ul className="list-disc list-inside space-y-1">
+            <div className="text-body text-muted-foreground">
+              <p className="font-medium mb-4pt">Supported Formats:</p>
+              <ul className="list-disc list-inside space-y-4pt">
                 <li>PDF documents (up to 500MB)</li>
                 <li>HTML files from Impact Assessment Registry</li>
                 <li>Word documents (DOC, DOCX)</li>
-                <li>Structured data (CSV, Excel)</li>
+                <li>Plain text files</li>
               </ul>
             </div>
           </div>

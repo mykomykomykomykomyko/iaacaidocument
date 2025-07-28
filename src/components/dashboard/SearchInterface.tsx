@@ -1,123 +1,190 @@
-import { useState } from 'react';
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, User } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { Search, Sparkles, FileText, User } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
+interface SearchResult {
+  document_id: string;
+  document_title: string;
+  relevant_passages: string[];
+  explanation: string;
+  confidence_score: number;
+}
+
 export const SearchInterface = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedPersona, setSelectedPersona] = useState('');
-  const [searchFilters, setSearchFilters] = useState<string[]>([]);
+  const [query, setQuery] = useState("");
+  const [persona, setPersona] = useState("general");
+  const [isSearching, setIsSearching] = useState(false);
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [searchSummary, setSummary] = useState("");
+  const { toast } = useToast();
 
-  const { data: personas } = useQuery({
-    queryKey: ['personas'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('personas')
-        .select('*')
-        .order('name');
-      
-      if (error) throw error;
-      return data;
+  const personas = {
+    'general': 'Environmental Analyst',
+    'fish-habitat': 'Fish Habitat Specialist',
+    'water-quality': 'Water Quality Expert', 
+    'caribou-biologist': 'Caribou Biologist',
+    'indigenous-knowledge': 'Indigenous Knowledge Keeper'
+  };
+
+  const handleSearch = async () => {
+    if (!query.trim()) {
+      toast({
+        title: "Enter search query",
+        description: "Please enter a search query",
+        variant: "destructive"
+      });
+      return;
     }
-  });
 
-  const handleSearch = () => {
-    // This will be connected to the vector search API
-    console.log('Searching:', { searchQuery, selectedPersona, searchFilters });
+    setIsSearching(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('semantic-search', {
+        body: { query, persona }
+      });
+
+      if (error) throw error;
+
+      setResults(data.results || []);
+      setSummary(data.summary || '');
+      
+      toast({
+        title: "Search completed",
+        description: `Found ${data.results?.length || 0} relevant results`
+      });
+
+    } catch (error) {
+      console.error('Search error:', error);
+      toast({
+        title: "Search failed",
+        description: error.message || "Failed to perform search",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const getConfidenceColor = (score: number) => {
+    if (score >= 80) return "bg-green-100 text-green-800 border-green-200";
+    if (score >= 60) return "bg-yellow-100 text-yellow-800 border-yellow-200"; 
+    return "bg-red-100 text-red-800 border-red-200";
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <Search className="h-5 w-5" />
-          <span>Semantic Document Search</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex space-x-2">
-          <div className="flex-1">
-            <Input
-              placeholder="Search for topics, impacts, or specific findings..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full"
-            />
-          </div>
-          <Button onClick={handleSearch} className="px-6">
-            <Search className="h-4 w-4 mr-2" />
-            Search
-          </Button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm font-medium text-foreground mb-2 block">
-              Analyst Persona
-            </label>
-            <Select value={selectedPersona} onValueChange={setSelectedPersona}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select specialist perspective" />
-              </SelectTrigger>
-              <SelectContent>
-                {personas?.map((persona) => (
-                  <SelectItem key={persona.id} value={persona.id}>
-                    <div className="flex items-center space-x-2">
-                      <User className="h-4 w-4" />
-                      <span>{persona.name}</span>
-                    </div>
-                  </SelectItem>
-                )) || []}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-foreground mb-2 block">
-              Document Type
-            </label>
-            <Select>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by document type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="environmental-assessment">Environmental Assessment</SelectItem>
-                <SelectItem value="impact-statement">Impact Statement</SelectItem>
-                <SelectItem value="monitoring-report">Monitoring Report</SelectItem>
-                <SelectItem value="technical-study">Technical Study</SelectItem>
-                <SelectItem value="consultation-report">Consultation Report</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">
-            Active Filters
-          </label>
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="secondary">Fish Habitat</Badge>
-            <Badge variant="secondary">Water Quality</Badge>
-            <Badge variant="secondary">Recent (2023-2024)</Badge>
-            <Button variant="ghost" size="sm" className="h-6 px-2">
-              <Filter className="h-3 w-3 mr-1" />
-              Add Filter
+    <div className="space-y-24pt">
+      <Card className="hover-lift transition-all duration-400">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-8pt">
+            <Search className="h-5 w-5" />
+            <span>Semantic Search</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-16pt">
+          <div className="flex flex-col lg:flex-row gap-12pt">
+            <div className="flex-1">
+              <Input
+                placeholder="Ask about environmental impacts, fish habitat, water quality..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                className="text-body"
+              />
+            </div>
+            <div className="lg:w-64">
+              <Select value={persona} onValueChange={setPersona}>
+                <SelectTrigger>
+                  <User className="h-4 w-4 mr-2" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(personas).map(([key, name]) => (
+                    <SelectItem key={key} value={key}>{name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button 
+              onClick={handleSearch}
+              disabled={isSearching}
+              className="gradient-btn flex items-center space-x-8pt"
+            >
+              {isSearching ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              ) : (
+                <Sparkles className="h-4 w-4" />
+              )}
+              <span>{isSearching ? 'Searching...' : 'Search'}</span>
             </Button>
           </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        <div className="bg-muted p-4 rounded-lg">
-          <p className="text-sm text-muted-foreground">
-            <strong>Smart Search:</strong> Use natural language queries like "What are the cumulative effects on caribou migration?" 
-            or "Show me all fish habitat compensation measures." The AI will understand context and find relevant passages.
-          </p>
+      {searchSummary && (
+        <Card className="bg-muted/30 border-primary/20">
+          <CardHeader>
+            <CardTitle className="text-lg">Search Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-body text-muted-foreground leading-relaxed">{searchSummary}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {results.length > 0 && (
+        <div className="space-y-16pt">
+          <h3 className="text-xl font-medium">Search Results</h3>
+          <div className="grid gap-16pt">
+            {results.map((result, index) => (
+              <Card key={index} className="hover-lift transition-all duration-400">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center space-x-8pt">
+                      <FileText className="h-5 w-5 text-primary" />
+                      <CardTitle className="text-lg">{result.document_title}</CardTitle>
+                    </div>
+                    <Badge className={`${getConfidenceColor(result.confidence_score)} border`}>
+                      {result.confidence_score}% confidence
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-12pt">
+                  <p className="text-body text-muted-foreground">{result.explanation}</p>
+                  
+                  {result.relevant_passages.length > 0 && (
+                    <div className="space-y-8pt">
+                      <h4 className="font-medium">Relevant Passages:</h4>
+                      <div className="space-y-8pt">
+                        {result.relevant_passages.map((passage, pIndex) => (
+                          <blockquote key={pIndex} className="border-l-4 border-primary/30 pl-16pt bg-muted/20 p-12pt rounded-r">
+                            <p className="text-body italic">{passage}</p>
+                          </blockquote>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      )}
+
+      {results.length === 0 && query && !isSearching && (
+        <Card className="bg-muted/20">
+          <CardContent className="p-24pt text-center">
+            <Search className="h-12 w-12 mx-auto mb-12pt text-muted-foreground" />
+            <p className="text-body text-muted-foreground">
+              No results found for "{query}". Try uploading some documents first or adjusting your search terms.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 };
