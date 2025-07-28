@@ -7,9 +7,24 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Clock, User, BarChart3, CheckCircle, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Clock, User, BarChart3, CheckCircle, AlertCircle, FileText, Eye } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import ReactMarkdown from "react-markdown";
+import { DocumentViewerDialog } from "./DocumentViewerDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
+
+interface Document {
+  id: string;
+  title: string;
+  filename: string;
+  original_filename: string;
+  content?: string;
+  mime_type: string;
+  file_size: number;
+  created_at: string;
+}
 
 interface Analysis {
   id: string;
@@ -20,6 +35,7 @@ interface Analysis {
   created_at: string;
   confidence_score?: number;
   key_findings?: string[];
+  document_id?: string;
 }
 
 interface AnalysisDetailDialogProps {
@@ -44,6 +60,44 @@ const getConfidenceColor = (confidence: number) => {
 };
 
 export const AnalysisDetailDialog = ({ analysis, open, onOpenChange }: AnalysisDetailDialogProps) => {
+  const [sourceDocument, setSourceDocument] = useState<Document | null>(null);
+  const [documentViewerOpen, setDocumentViewerOpen] = useState(false);
+  const [loadingDocument, setLoadingDocument] = useState(false);
+
+  useEffect(() => {
+    if (analysis?.document_id && open) {
+      fetchSourceDocument(analysis.document_id);
+    }
+  }, [analysis?.document_id, open]);
+
+  const fetchSourceDocument = async (documentId: string) => {
+    setLoadingDocument(true);
+    try {
+      const { data, error } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('id', documentId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching document:', error);
+        return;
+      }
+
+      setSourceDocument(data);
+    } catch (error) {
+      console.error('Error fetching document:', error);
+    } finally {
+      setLoadingDocument(false);
+    }
+  };
+
+  const handleViewDocument = () => {
+    if (sourceDocument) {
+      setDocumentViewerOpen(true);
+    }
+  };
+
   if (!analysis) return null;
 
   return (
@@ -105,6 +159,38 @@ export const AnalysisDetailDialog = ({ analysis, open, onOpenChange }: AnalysisD
               </Card>
             )}
           </div>
+
+          {/* Source Document */}
+          {sourceDocument && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-8pt">
+                  <FileText className="h-5 w-5" />
+                  <span>Source Document</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between p-16pt bg-muted rounded-lg">
+                  <div className="flex items-center space-x-12pt">
+                    <FileText className="h-8 w-8 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium text-body">{sourceDocument.title}</p>
+                      <p className="text-body text-muted-foreground">{sourceDocument.original_filename}</p>
+                    </div>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleViewDocument}
+                    className="flex items-center space-x-8pt"
+                  >
+                    <Eye className="h-4 w-4" />
+                    <span>View Document</span>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Key Findings */}
           {analysis.key_findings && analysis.key_findings.length > 0 && (
@@ -170,6 +256,12 @@ export const AnalysisDetailDialog = ({ analysis, open, onOpenChange }: AnalysisD
           </Card>
         </div>
       </DialogContent>
+
+      <DocumentViewerDialog 
+        document={sourceDocument}
+        open={documentViewerOpen}
+        onOpenChange={setDocumentViewerOpen}
+      />
     </Dialog>
   );
 };
