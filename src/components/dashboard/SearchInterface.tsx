@@ -5,19 +5,26 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Search, Filter, User } from "lucide-react";
-
-const personas = [
-  { id: 'fish-habitat', name: 'Fish Habitat Specialist', icon: '🐟' },
-  { id: 'water-quality', name: 'Water Quality Expert', icon: '💧' },
-  { id: 'caribou', name: 'Caribou Biologist', icon: '🦌' },
-  { id: 'indigenous', name: 'Indigenous Knowledge Keeper', icon: '🪶' },
-  { id: 'geologist', name: 'Environmental Geologist', icon: '🗻' },
-];
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export const SearchInterface = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPersona, setSelectedPersona] = useState('');
   const [searchFilters, setSearchFilters] = useState<string[]>([]);
+
+  const { data: personas } = useQuery({
+    queryKey: ['personas'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('personas')
+        .select('*')
+        .order('name');
+      
+      if (error) throw error;
+      return data;
+    }
+  });
 
   const handleSearch = () => {
     // This will be connected to the vector search API
@@ -58,14 +65,14 @@ export const SearchInterface = () => {
                 <SelectValue placeholder="Select specialist perspective" />
               </SelectTrigger>
               <SelectContent>
-                {personas.map((persona) => (
+                {personas?.map((persona) => (
                   <SelectItem key={persona.id} value={persona.id}>
                     <div className="flex items-center space-x-2">
-                      <span>{persona.icon}</span>
+                      <User className="h-4 w-4" />
                       <span>{persona.name}</span>
                     </div>
                   </SelectItem>
-                ))}
+                )) || []}
               </SelectContent>
             </Select>
           </div>
