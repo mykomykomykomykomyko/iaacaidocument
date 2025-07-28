@@ -275,7 +275,7 @@ export const DocumentUpload = () => {
                 type="file"
                 accept=".html,.htm,.xls,.xlsx,.txt,.pdf"
                 onChange={handleFileChange}
-                className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:bg-primary file:text-primary-foreground hover:file:bg-primary-hover"
+                className="file:mr-8pt file:py-8pt file:px-12pt file:rounded-lg file:border-0 file:text-sm file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 file:cursor-pointer cursor-pointer"
               />
               {file && (
                 <p className="text-body text-muted-foreground">
