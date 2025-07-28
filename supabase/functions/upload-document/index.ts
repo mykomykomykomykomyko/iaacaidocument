@@ -18,16 +18,25 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Upload function called');
+    
     const formData = await req.formData();
     const file = formData.get('file') as File;
-    const title = formData.get('title') as string;
-    const description = formData.get('description') as string;
+    const title = formData.get('title') as string || 'Untitled Document';
+    const description = formData.get('description') as string || '';
 
     if (!file) {
-      throw new Error('No file provided');
+      console.error('No file provided');
+      return new Response(JSON.stringify({ 
+        error: 'No file provided',
+        success: false 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    console.log(`Processing file upload: ${file.name}, type: ${file.type}, size: ${file.size}`);
+    console.log(`Processing file: ${file.name}, type: ${file.type}, size: ${file.size}`);
 
     // Validate file type
     const allowedTypes = [
@@ -39,98 +48,90 @@ serve(async (req) => {
     ];
 
     if (!allowedTypes.includes(file.type)) {
-      throw new Error(`Unsupported file type: ${file.type}`);
+      console.error(`Unsupported file type: ${file.type}`);
+      return new Response(JSON.stringify({ 
+        error: `Unsupported file type: ${file.type}`,
+        success: false 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Validate file size (500MB limit)
     const maxSize = 500 * 1024 * 1024; // 500MB
     if (file.size > maxSize) {
-      throw new Error('File size exceeds 500MB limit');
+      console.error('File size exceeds limit');
+      return new Response(JSON.stringify({ 
+        error: 'File size exceeds 500MB limit',
+        success: false 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    // Extract text content based on file type
+    // Extract text content
     let extractedText = '';
-    const fileBuffer = await file.arrayBuffer();
-    const uint8Array = new Uint8Array(fileBuffer);
-
     try {
       if (file.type === 'text/plain' || file.type === 'text/html') {
-        extractedText = new TextDecoder().decode(uint8Array);
-      } else if (file.type === 'application/pdf') {
-        // For PDF files, we'll store a placeholder for now
-        // In a production environment, you'd use a PDF parsing library
-        extractedText = '[PDF content - requires processing]';
-      } else if (file.type.includes('word')) {
-        // For Word documents, we'll store a placeholder for now
-        // In a production environment, you'd use a Word document parsing library
-        extractedText = '[Word document content - requires processing]';
+        const fileBuffer = await file.arrayBuffer();
+        extractedText = new TextDecoder().decode(fileBuffer);
+      } else {
+        // For PDF and Word files, store placeholder
+        extractedText = `[${file.type} content - size: ${file.size} bytes]`;
       }
     } catch (extractError) {
       console.error('Text extraction failed:', extractError);
       extractedText = '[Content extraction failed]';
     }
 
-    // Generate file metadata
-    const fileMetadata = {
-      size: file.size,
-      type: file.type,
-      lastModified: new Date().toISOString()
-    };
-
     // Save document to database
+    console.log('Saving document to database...');
     const { data: document, error: dbError } = await supabase
       .from('documents')
       .insert({
-        title: title || file.name,
-        description: description || '',
+        title,
+        description,
         file_name: file.name,
         file_type: file.type,
         file_size: file.size,
         extracted_text: extractedText,
-        metadata: fileMetadata,
-        processing_status: 'completed'
+        metadata: {
+          originalName: file.name,
+          uploadedAt: new Date().toISOString()
+        },
+        processing_status: 'completed',
+        user_id: null // Allow anonymous uploads
       })
       .select()
       .single();
 
     if (dbError) {
-      throw new Error(`Database error: ${dbError.message}`);
+      console.error('Database error:', dbError);
+      return new Response(JSON.stringify({ 
+        error: `Database error: ${dbError.message}`,
+        success: false 
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     console.log(`Document uploaded successfully with ID: ${document.id}`);
 
-    // Auto-trigger analysis for uploaded document
-    try {
-      await fetch(`${supabaseUrl}/functions/v1/analyze-document`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${supabaseServiceKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          document_id: document.id,
-          persona: 'general',
-          analysis_type: 'initial'
-        }),
-      });
-      console.log('Auto-analysis triggered');
-    } catch (analysisError) {
-      console.error('Failed to trigger auto-analysis:', analysisError);
-      // Don't fail the upload if analysis fails
-    }
-
     return new Response(JSON.stringify({
       success: true,
       document,
-      message: 'Document uploaded and processing initiated'
+      message: 'Document uploaded successfully'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
-    console.error('Error in upload-document function:', error);
+    console.error('Unexpected error:', error);
     return new Response(JSON.stringify({ 
-      error: error.message,
+      error: `Unexpected error: ${error.message}`,
       success: false 
     }), {
       status: 500,
