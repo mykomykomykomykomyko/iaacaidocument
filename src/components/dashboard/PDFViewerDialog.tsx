@@ -31,15 +31,17 @@ export const PDFViewerDialog = ({ document, open, onOpenChange }: PDFViewerDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-hidden p-0">
-        <DialogHeader className="p-6 pb-0">
+      <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-auto p-0">
+        <DialogHeader className="p-6 pb-0 sticky top-0 bg-background z-10">
           <DialogTitle className="flex items-center space-x-2">
             <span>PDF Document Viewer</span>
           </DialogTitle>
         </DialogHeader>
 
         {isPDF ? (
-          <PDFProcessingTester documentProp={document} />
+          <div className="overflow-auto max-h-[calc(95vh-100px)]">
+            <PDFProcessingTester documentProp={document} />
+          </div>
         ) : (
           <div className="p-6 text-center">
             <p className="text-lg font-medium">Not a PDF Document</p>
