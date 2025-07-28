@@ -8,6 +8,7 @@ import { MessageSquare, Send, Bot, User, Sparkles, Search, FileText } from "luci
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Message {
   id: string;
@@ -26,6 +27,7 @@ interface Persona {
 }
 
 export const ChatbotInterface = () => {
+  const { t } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [persona, setPersona] = useState("");
@@ -101,23 +103,23 @@ export const ChatbotInterface = () => {
 
       if (data.isOnlineSearch) {
         toast({
-          title: "Online search performed",
-          description: "I searched online for additional information to answer your question."
+          title: t('chat.onlineSearchPerformed'),
+          description: t('chat.onlineSearchDesc')
         });
       }
 
     } catch (error) {
       console.error('Chat error:', error);
       toast({
-        title: "Chat failed",
-        description: error.message || "Failed to get response from AI analyst",
+        title: t('chat.chatFailed'),
+        description: error.message || t('chat.chatFailedDesc'),
         variant: "destructive"
       });
 
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: "I apologize, but I encountered an error processing your request. Please try again.",
+        content: t('chat.errorMessage'),
         timestamp: new Date()
       };
 
@@ -145,13 +147,13 @@ export const ChatbotInterface = () => {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center space-x-8pt">
               <MessageSquare className="h-5 w-5" />
-              <span>AI Analyst</span>
+              <span>{t('chat.title')}</span>
             </CardTitle>
             <div className="flex items-center space-x-12pt">
               <Select value={persona} onValueChange={setPersona} disabled={personasLoading}>
                 <SelectTrigger className="w-48">
                   <User className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder={personasLoading ? "Loading..." : "Select persona"} />
+                  <SelectValue placeholder={personasLoading ? t('chat.loading') : t('chat.selectPersona')} />
                 </SelectTrigger>
                 <SelectContent>
                   {personas?.map((p) => (
@@ -166,7 +168,7 @@ export const ChatbotInterface = () => {
               </Select>
               {messages.length > 0 && (
                 <Button variant="outline" size="sm" onClick={clearChat}>
-                  Clear Chat
+                  {t('chat.clearChat')}
                 </Button>
               )}
             </div>
@@ -180,17 +182,17 @@ export const ChatbotInterface = () => {
                 <div className="flex flex-col items-center justify-center h-full text-center space-y-12pt">
                   <Bot className="h-12 w-12 text-muted-foreground" />
                   <div>
-                    <h3 className="font-medium text-foreground mb-8pt">Welcome to AI Analyst</h3>
+                    <h3 className="font-medium text-foreground mb-8pt">{t('chat.welcome')}</h3>
                     <p className="text-body text-muted-foreground max-w-md">
-                      Ask me questions about your uploaded documents. If I don't find relevant information in your documents, I'll search online for additional data.
+                      {t('chat.welcomeDesc')}
                     </p>
                   </div>
                   <div className="grid grid-cols-1 gap-8pt text-sm text-muted-foreground">
-                    <p className="italic">Try asking:</p>
+                    <p className="italic">{t('chat.tryAsking')}</p>
                     <div className="space-y-4pt">
-                      <p>• "What are the environmental impacts mentioned in my documents?"</p>
-                      <p>• "Tell me about water quality standards for mining operations"</p>
-                      <p>• "What mitigation measures are recommended for fish habitat?"</p>
+                      <p>• {t('chat.example1')}</p>
+                      <p>• {t('chat.example2')}</p>
+                      <p>• {t('chat.example3')}</p>
                     </div>
                   </div>
                 </div>
@@ -222,7 +224,7 @@ export const ChatbotInterface = () => {
                           <div className="mt-8pt pt-8pt border-t border-muted-foreground/20">
                             <div className="flex items-center space-x-4pt text-xs text-muted-foreground mb-4pt">
                               <FileText className="h-3 w-3" />
-                              <span>Sources from your documents:</span>
+                              <span>{t('chat.sourcesFromDocs')}</span>
                             </div>
                             <ul className="text-xs space-y-2pt">
                               {message.sources.map((source, idx) => (
@@ -235,7 +237,7 @@ export const ChatbotInterface = () => {
                           <div className="mt-8pt pt-8pt border-t border-muted-foreground/20">
                             <div className="flex items-center space-x-4pt text-xs text-muted-foreground">
                               <Search className="h-3 w-3" />
-                              <span>Information sourced from online search</span>
+                              <span>{t('chat.onlineSource')}</span>
                             </div>
                           </div>
                         )}
@@ -262,7 +264,7 @@ export const ChatbotInterface = () => {
                       <div className="bg-muted rounded-lg p-12pt">
                         <div className="flex items-center space-x-8pt">
                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                          <span className="text-body text-muted-foreground">AI Analyst is thinking...</span>
+                          <span className="text-body text-muted-foreground">{t('chat.thinking')}</span>
                         </div>
                       </div>
                     </div>
@@ -277,7 +279,7 @@ export const ChatbotInterface = () => {
           <div className="flex items-center space-x-8pt">
             <div className="flex-1">
               <Input
-                placeholder="Ask me anything about your documents or environmental topics..."
+                placeholder={t('chat.placeholder')}
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
@@ -307,25 +309,25 @@ export const ChatbotInterface = () => {
             <div>
               <h4 className="font-medium text-foreground mb-12pt flex items-center space-x-8pt">
                 <Sparkles className="h-4 w-4" />
-                <span>How it works</span>
+                <span>{t('chat.howItWorks')}</span>
               </h4>
               <ul className="space-y-8pt text-body text-muted-foreground">
-                <li>• First, I search through your uploaded documents</li>
-                <li>• If no relevant information is found, I search online</li>
-                <li>• I provide sources and indicate when information comes from online</li>
-                <li>• Choose a specialist persona for expert-level responses</li>
+                <li>• {t('chat.searchDocs')}</li>
+                <li>• {t('chat.searchOnline')}</li>
+                <li>• {t('chat.provideSources')}</li>
+                <li>• {t('chat.choosePersona')}</li>
               </ul>
             </div>
             <div>
               <h4 className="font-medium text-foreground mb-12pt flex items-center space-x-8pt">
                 <MessageSquare className="h-4 w-4" />
-                <span>Tips for better responses</span>
+                <span>{t('chat.tips')}</span>
               </h4>
               <ul className="space-y-8pt text-body text-muted-foreground">
-                <li>• Be specific in your questions</li>
-                <li>• Ask about environmental impacts, regulations, or best practices</li>
-                <li>• Reference specific projects or locations when relevant</li>
-                <li>• Use follow-up questions to dive deeper into topics</li>
+                <li>• {t('chat.beSpecific')}</li>
+                <li>• {t('chat.askAbout')}</li>
+                <li>• {t('chat.reference')}</li>
+                <li>• {t('chat.followUp')}</li>
               </ul>
             </div>
           </div>

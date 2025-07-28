@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Search, Sparkles, FileText, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface SearchResult {
   document_id: string;
@@ -17,6 +18,7 @@ interface SearchResult {
 }
 
 export const SearchInterface = () => {
+  const { t } = useLanguage();
   const [query, setQuery] = useState("");
   const [persona, setPersona] = useState("general");
   const [isSearching, setIsSearching] = useState(false);
@@ -35,8 +37,8 @@ export const SearchInterface = () => {
   const handleSearch = async () => {
     if (!query.trim()) {
       toast({
-        title: "Enter search query",
-        description: "Please enter a search query",
+        title: t('search.enterQuery'),
+        description: t('search.enterQueryDesc'),
         variant: "destructive"
       });
       return;
@@ -54,15 +56,15 @@ export const SearchInterface = () => {
       setSummary(data.summary || '');
       
       toast({
-        title: "Search completed",
-        description: `Found ${data.results?.length || 0} relevant results`
+        title: t('search.searchCompleted'),
+        description: t('search.searchCompletedDesc').replace('{count}', (data.results?.length || 0).toString())
       });
 
     } catch (error) {
       console.error('Search error:', error);
       toast({
-        title: "Search failed",
-        description: error.message || "Failed to perform search",
+        title: t('search.searchFailed'),
+        description: error.message || t('search.searchFailedDesc'),
         variant: "destructive"
       });
     } finally {
@@ -82,14 +84,14 @@ export const SearchInterface = () => {
         <CardHeader>
           <CardTitle className="flex items-center space-x-8pt">
             <Search className="h-5 w-5" />
-            <span>Semantic Search</span>
+            <span>{t('search.title')}</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-16pt">
           <div className="flex flex-col lg:flex-row gap-12pt">
             <div className="flex-1">
               <Input
-                placeholder="Ask about environmental impacts, fish habitat, water quality..."
+                placeholder={t('search.placeholder')}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -119,7 +121,7 @@ export const SearchInterface = () => {
               ) : (
                 <Sparkles className="h-4 w-4" />
               )}
-              <span>{isSearching ? 'Searching...' : 'Search'}</span>
+              <span>{isSearching ? t('search.searching') : t('search.searchBtn')}</span>
             </Button>
           </div>
         </CardContent>
@@ -128,7 +130,7 @@ export const SearchInterface = () => {
       {searchSummary && (
         <Card className="bg-muted/30 border-primary/20">
           <CardHeader>
-            <CardTitle className="text-lg">Search Summary</CardTitle>
+            <CardTitle className="text-lg">{t('search.searchSummary')}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-body text-muted-foreground leading-relaxed">{searchSummary}</p>
@@ -138,7 +140,7 @@ export const SearchInterface = () => {
 
       {results.length > 0 && (
         <div className="space-y-16pt">
-          <h3 className="text-xl font-medium">Search Results</h3>
+          <h3 className="text-xl font-medium">{t('search.searchResults')}</h3>
           <div className="grid gap-16pt">
             {results.map((result, index) => (
               <Card key={index} className="hover-lift transition-all duration-400">
@@ -149,7 +151,7 @@ export const SearchInterface = () => {
                       <CardTitle className="text-lg">{result.document_title}</CardTitle>
                     </div>
                     <Badge className={`${getConfidenceColor(result.confidence_score)} border`}>
-                      {result.confidence_score}% confidence
+                      {t('search.confidence').replace('{score}', result.confidence_score.toString())}
                     </Badge>
                   </div>
                 </CardHeader>
@@ -158,7 +160,7 @@ export const SearchInterface = () => {
                   
                   {result.relevant_passages.length > 0 && (
                     <div className="space-y-8pt">
-                      <h4 className="font-medium">Relevant Passages:</h4>
+                      <h4 className="font-medium">{t('search.relevantPassages')}</h4>
                       <div className="space-y-8pt">
                         {result.relevant_passages.map((passage, pIndex) => (
                           <blockquote key={pIndex} className="border-l-4 border-primary/30 pl-16pt bg-muted/20 p-12pt rounded-r">
@@ -180,7 +182,7 @@ export const SearchInterface = () => {
           <CardContent className="p-24pt text-center">
             <Search className="h-12 w-12 mx-auto mb-12pt text-muted-foreground" />
             <p className="text-body text-muted-foreground">
-              No results found for "{query}". Try uploading some documents first or adjusting your search terms.
+              {t('search.noResults').replace('{query}', query)}
             </p>
           </CardContent>
         </Card>

@@ -370,11 +370,11 @@ export const DocumentUpload = () => {
         <div className="flex items-center justify-between p-16pt border rounded-lg">
           <div className="flex items-center space-x-8pt">
             <Upload className="h-4 w-4" />
-            <span className="font-medium">File Upload</span>
+            <span className="font-medium">{t('upload.fileUpload')}</span>
           </div>
           <div className="flex items-center space-x-8pt">
             <Label htmlFor="upload-mode" className="text-body">
-              {isPlainText ? 'Plain Text' : 'File Upload'}
+              {isPlainText ? t('upload.plainText') : t('upload.fileUpload')}
             </Label>
             <Switch
               id="upload-mode"
@@ -389,18 +389,18 @@ export const DocumentUpload = () => {
           // Plain Text Mode
           <>
             <div className="space-y-8pt">
-              <Label htmlFor="plain-text-content">Text Content</Label>
+              <Label htmlFor="plain-text-content">{t('upload.textContent')}</Label>
               <Textarea
                 id="plain-text-content"
                 value={plainTextContent}
                 onChange={(e) => setPlainTextContent(e.target.value)}
-                placeholder="Paste your text content here..."
+                placeholder={t('upload.pasteText')}
                 rows={8}
                 className="min-h-[200px]"
               />
               {plainTextContent && (
                 <p className="text-body text-muted-foreground">
-                  Characters: {plainTextContent.length} | Size: {(new Blob([plainTextContent]).size / 1024).toFixed(2)} KB
+                  {t('upload.characters')}: {plainTextContent.length} | {t('upload.size')}: {(new Blob([plainTextContent]).size / 1024).toFixed(2)} KB
                 </p>
               )}
             </div>
@@ -409,7 +409,7 @@ export const DocumentUpload = () => {
           // File Upload Mode
           <>
             <div className="space-y-8pt">
-              <Label htmlFor="file-upload">Select Documents (Multiple files supported)</Label>
+              <Label htmlFor="file-upload">{t('upload.selectDocuments')}</Label>
               <Input
                 id="file-upload"
                 type="file"
@@ -421,7 +421,7 @@ export const DocumentUpload = () => {
               {files.length > 0 && (
                 <div className="space-y-4pt">
                   <p className="text-body text-muted-foreground font-medium">
-                    Selected {files.length} file(s):
+                    {t('upload.selectedFiles')} {files.length}
                   </p>
                   <div className="max-h-32 overflow-y-auto space-y-2pt">
                     {files.map((f, index) => (
@@ -434,7 +434,7 @@ export const DocumentUpload = () => {
                     ))}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Total size: {(files.reduce((sum, f) => sum + f.size, 0) / 1024 / 1024).toFixed(2)} MB
+                    {t('upload.totalSize')}: {(files.reduce((sum, f) => sum + f.size, 0) / 1024 / 1024).toFixed(2)} MB
                   </p>
                 </div>
               )}
@@ -443,22 +443,22 @@ export const DocumentUpload = () => {
         )}
 
         <div className="space-y-8pt">
-          <Label htmlFor="title">Document Title</Label>
+          <Label htmlFor="title">{t('upload.documentTitle')}</Label>
           <Input
             id="title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Enter document title"
+            placeholder={t('upload.enterTitle')}
           />
         </div>
 
         <div className="space-y-8pt">
-          <Label htmlFor="description">Description (Optional)</Label>
+          <Label htmlFor="description">{t('upload.description')}</Label>
           <Textarea
             id="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Brief description of the document"
+            placeholder={t('upload.briefDesc')}
             rows={3}
           />
         </div>
@@ -471,7 +471,7 @@ export const DocumentUpload = () => {
             onCheckedChange={(checked) => setAutoAnalyze(checked === true)}
           />
           <Label htmlFor="auto-analyze" className="text-body cursor-pointer">
-            Automatically analyze {files.length > 1 ? 'all documents' : 'document'} after upload
+            {t('upload.autoAnalyzeDesc')}
           </Label>
           <Sparkles className="h-4 w-4 text-primary" />
         </div>
