@@ -5,6 +5,8 @@ import { FileText, ExternalLink, Clock, User } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
+import { useState } from "react";
+import { AnalysisDetailDialog } from "./AnalysisDetailDialog";
 
 interface Analysis {
   id: string;
@@ -44,6 +46,9 @@ const getPersonaDisplayName = (persona: string) => {
 };
 
 export const RecentAnalyses = () => {
+  const [selectedAnalysis, setSelectedAnalysis] = useState<Analysis | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
   const { data: analyses, isLoading, refetch } = useQuery({
     queryKey: ['recent-analyses'],
     refetchInterval: 5000, // Refresh every 5 seconds to show new analyses
@@ -67,6 +72,11 @@ export const RecentAnalyses = () => {
       return data as Analysis[];
     }
   });
+
+  const handleViewReport = (analysis: Analysis) => {
+    setSelectedAnalysis(analysis);
+    setDialogOpen(true);
+  };
 
   return (
     <Card className="hover-lift transition-all duration-400">
@@ -126,7 +136,7 @@ export const RecentAnalyses = () => {
                       </span>
                     )}
                   </div>
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" onClick={() => handleViewReport(analysis)}>
                     <ExternalLink className="h-3 w-3 mr-4pt" />
                     View Report
                   </Button>
@@ -142,6 +152,12 @@ export const RecentAnalyses = () => {
           </div>
         )}
       </CardContent>
+
+      <AnalysisDetailDialog
+        analysis={selectedAnalysis}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+      />
     </Card>
   );
 };
