@@ -14,12 +14,19 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log('=== Analyze Document Function Called ===');
+  
   if (req.method === 'OPTIONS') {
+    console.log('Handling CORS preflight request');
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { document_id, analysis_type = 'environmental' } = await req.json();
+    console.log('Parsing request body...');
+    const requestBody = await req.json();
+    console.log('Request body:', JSON.stringify(requestBody));
+    
+    const { document_id, analysis_type = 'environmental' } = requestBody;
 
     console.log(`Starting analysis for document ${document_id} with type ${analysis_type}`);
 
@@ -34,23 +41,48 @@ serve(async (req) => {
       });
     }
 
+    if (!document_id) {
+      console.error('No document_id provided');
+      return new Response(JSON.stringify({ 
+        error: 'document_id is required',
+        success: false 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Get document content from database
+    console.log('Fetching document from database...');
     const { data: document, error: docError } = await supabase
       .from('documents')
       .select('*')
       .eq('id', document_id)
       .single();
 
-    if (docError || !document) {
-      console.error('Document not found:', docError?.message);
+    if (docError) {
+      console.error('Database error fetching document:', docError);
       return new Response(JSON.stringify({ 
-        error: `Document not found: ${docError?.message}`,
+        error: `Database error: ${docError.message}`,
         success: false 
       }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    if (!document) {
+      console.error('Document not found with ID:', document_id);
+      return new Response(JSON.stringify({ 
+        error: `Document not found with ID: ${document_id}`,
+        success: false 
+      }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log('Document found:', document.title);
 
     const documentTitle = document.title || document.original_filename;
     console.log(`Analyzing document: ${documentTitle}`);
@@ -167,10 +199,16 @@ Format your response clearly with headers and bullet points for easy parsing.`;
     });
 
   } catch (error) {
-    console.error('Error in analyze-document function:', error);
+    console.error('=== ANALYZE DOCUMENT ERROR ===');
+    console.error('Error type:', typeof error);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Full error object:', JSON.stringify(error, null, 2));
+    
     return new Response(JSON.stringify({ 
-      error: error.message,
-      success: false 
+      error: `Analysis failed: ${error.message}`,
+      success: false,
+      details: error.stack
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
