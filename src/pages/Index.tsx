@@ -1,10 +1,10 @@
 import { Header } from "@/components/layout/Header";
 import { StatsCards } from "@/components/dashboard/StatsCards";
 import { DocumentUpload } from "@/components/dashboard/DocumentUpload";
-import { SearchInterface } from "@/components/dashboard/SearchInterface";
+import { ChatbotInterface } from "@/components/dashboard/ChatbotInterface";
 import { RecentAnalyses } from "@/components/dashboard/RecentAnalyses";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Search, BarChart3, Upload } from "lucide-react";
+import { FileText, MessageSquare, BarChart3, Upload } from "lucide-react";
 
 const Index = () => {
   return (
@@ -34,8 +34,8 @@ const Index = () => {
               <span className="font-medium">Upload</span>
             </TabsTrigger>
             <TabsTrigger value="search" className="flex items-center space-x-8pt px-16pt py-12pt transition-all duration-300 hover-lift">
-              <Search className="h-4 w-4" />
-              <span className="font-medium">Search</span>
+              <MessageSquare className="h-4 w-4" />
+              <span className="font-medium">AI Analyst</span>
             </TabsTrigger>
             <TabsTrigger value="analyses" className="flex items-center space-x-8pt px-16pt py-12pt transition-all duration-300 hover-lift">
               <FileText className="h-4 w-4" />
@@ -87,25 +87,24 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="search" className="space-y-24pt">
-            <SearchInterface />
+            <ChatbotInterface />
             <div className="bg-muted/50 p-24pt rounded-lg hover-lift transition-all duration-400">
-              <h3 className="text-lg font-medium mb-16pt">Search Tips</h3>
+              <h3 className="text-lg font-medium mb-16pt">AI Analyst Features</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-16pt text-body text-muted-foreground">
                 <div>
-                  <h4 className="font-medium text-foreground mb-8pt">Natural Language Queries</h4>
+                  <h4 className="font-medium text-foreground mb-8pt">Document Analysis</h4>
                   <ul className="space-y-4pt">
-                    <li>• "What are the impacts on fish habitat?"</li>
-                    <li>• "Show me caribou migration concerns"</li>
-                    <li>• "Water quality monitoring requirements"</li>
+                    <li>• Searches through your uploaded documents first</li>
+                    <li>• Provides source references from your files</li>
+                    <li>• Contextual analysis based on your data</li>
                   </ul>
                 </div>
                 <div>
-                  <h4 className="font-medium text-foreground mb-8pt">Specialist Perspectives</h4>
+                  <h4 className="font-medium text-foreground mb-8pt">Online Research</h4>
                   <ul className="space-y-4pt">
-                    <li>• Fish Habitat Specialist</li>
-                    <li>• Water Quality Expert</li>
-                    <li>• Caribou Biologist</li>
-                    <li>• Indigenous Knowledge Keeper</li>
+                    <li>• Searches online when documents lack information</li>
+                    <li>• Current environmental regulations and standards</li>
+                    <li>• Best practices and industry guidelines</li>
                   </ul>
                 </div>
               </div>
