@@ -176,19 +176,6 @@ Format your response clearly with headers and bullet points for easy parsing.`;
   }
 });
 
-function extractSummary(content: string): string {
-  const lines = content.split('\n');
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (line.toLowerCase().includes('executive summary') || line.toLowerCase().includes('summary')) {
-      // Get the next few lines for summary
-      const summaryLines = lines.slice(i + 1, i + 4).filter(l => l.trim().length > 0);
-      return summaryLines.join(' ').trim();
-    }
-  }
-  return content.substring(0, 200) + '...';
-}
-
 function extractKeyFindings(content: string): string[] {
   const findings: string[] = [];
   const lines = content.split('\n');
@@ -243,41 +230,4 @@ function extractRecommendations(content: string): string[] {
   }
   
   return recommendations.slice(0, 5);
-}
-
-function extractEnvironmentalImpacts(content: string): any {
-  const impacts = {
-    severity: 'medium',
-    categories: [] as string[],
-    details: ''
-  };
-  
-  const lines = content.split('\n');
-  let inImpactSection = false;
-  
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    
-    if (line.toLowerCase().includes('environmental impact')) {
-      inImpactSection = true;
-      continue;
-    }
-    
-    if (inImpactSection && line.toLowerCase().includes('recommendation') && line.includes(':')) {
-      break;
-    }
-    
-    if (inImpactSection && line.length > 20) {
-      impacts.details += line + ' ';
-      
-      // Detect categories
-      if (line.toLowerCase().includes('air')) impacts.categories.push('Air Quality');
-      if (line.toLowerCase().includes('water')) impacts.categories.push('Water Resources');
-      if (line.toLowerCase().includes('soil')) impacts.categories.push('Soil');
-      if (line.toLowerCase().includes('wildlife')) impacts.categories.push('Wildlife');
-      if (line.toLowerCase().includes('noise')) impacts.categories.push('Noise');
-    }
-  }
-  
-  return impacts;
 }

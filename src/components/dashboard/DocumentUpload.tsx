@@ -66,8 +66,7 @@ export const DocumentUpload = () => {
       const fileInput = document.getElementById('file-upload') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
 
-      // Refresh the page data to show new analysis
-      window.location.reload();
+      // Don't reload the page - let React Query handle refreshing the data
 
     } catch (error) {
       console.error('Upload error:', error);

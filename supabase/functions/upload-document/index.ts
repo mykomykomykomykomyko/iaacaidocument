@@ -148,15 +148,14 @@ serve(async (req) => {
 
     console.log(`Document uploaded successfully with ID: ${document.id}`);
 
-    // Trigger AI analysis immediately
+    // Trigger analysis function
     try {
       console.log('Starting immediate analysis...');
       
       const analysisResponse = await supabase.functions.invoke('analyze-document', {
         body: {
           document_id: document.id,
-          persona: 'general',
-          analysis_type: 'comprehensive'
+          analysis_type: 'environmental'
         }
       });
       
