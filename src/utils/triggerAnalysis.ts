@@ -34,3 +34,32 @@ export const triggerAnalysisForDocument = async (
     return { success: false, error };
   }
 };
+
+export const triggerBulkAnalysis = async (
+  documentIds: string[], 
+  options: AnalysisOptions = {}
+) => {
+  try {
+    console.log(`Triggering bulk analysis for ${documentIds.length} documents:`, documentIds, options);
+    
+    const { data, error } = await supabase.functions.invoke('analyze-document', {
+      body: { 
+        document_ids: documentIds, // Multiple IDs for bulk
+        analysis_type: options.analysis_type || 'environmental',
+        persona_id: options.persona_id,
+        custom_instructions: options.custom_instructions
+      },
+    });
+
+    if (error) {
+      console.error('Bulk analysis trigger error:', error);
+      return { success: false, error };
+    }
+
+    console.log('Bulk analysis triggered successfully:', data);
+    return { success: true, data };
+  } catch (error) {
+    console.error('Failed to trigger bulk analysis:', error);
+    return { success: false, error };
+  }
+};

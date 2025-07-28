@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { triggerAnalysisForDocument } from "@/utils/triggerAnalysis";
+import { triggerAnalysisForDocument, triggerBulkAnalysis } from "@/utils/triggerAnalysis";
 
 export const DocumentUpload = () => {
   const [isPlainText, setIsPlainText] = useState(false);
@@ -134,28 +134,44 @@ export const DocumentUpload = () => {
       
       // Auto-analyze if checkbox is checked
       if (autoAnalyze && uploadedDocuments.length > 0) {
-        let analysisSuccessCount = 0;
-        let analysisFailCount = 0;
-        
-        for (const doc of uploadedDocuments) {
-          if (doc?.id) {
-            try {
-              const analysisResult = await triggerAnalysisForDocument(doc.id);
-              if (analysisResult.success) {
-                analysisSuccessCount++;
-              } else {
-                analysisFailCount++;
-              }
-            } catch (error) {
-              analysisFailCount++;
+        try {
+          if (uploadedDocuments.length === 1) {
+            // Single document analysis
+            const analysisResult = await triggerAnalysisForDocument(uploadedDocuments[0].id);
+            if (analysisResult.success) {
+              toast({
+                title: "Upload & Analysis Started",
+                description: "Document uploaded and analysis has been started automatically."
+              });
+            } else {
+              toast({
+                title: "Upload successful, Analysis failed",
+                description: "Document uploaded but auto-analysis failed. Use 'Analyze' button manually.",
+                variant: "destructive"
+              });
+            }
+          } else {
+            // Bulk analysis - combine all documents into one analysis
+            const documentIds = uploadedDocuments.filter(doc => doc?.id).map(doc => doc.id);
+            const bulkAnalysisResult = await triggerBulkAnalysis(documentIds);
+            if (bulkAnalysisResult.success) {
+              toast({
+                title: "Bulk Upload & Analysis Started",
+                description: `${successCount} files uploaded and combined into a single analysis.`
+              });
+            } else {
+              toast({
+                title: "Upload successful, Analysis failed",
+                description: "Files uploaded but bulk analysis failed. Use individual 'Analyze' buttons manually.",
+                variant: "destructive"
+              });
             }
           }
-        }
-        
-        if (successCount > 0) {
+        } catch (error) {
           toast({
-            title: `Bulk Upload ${failCount > 0 ? 'Partially ' : ''}Complete`,
-            description: `${successCount} file(s) uploaded successfully${failCount > 0 ? `, ${failCount} failed` : ''}. ${analysisSuccessCount} analysis(es) started${analysisFailCount > 0 ? `, ${analysisFailCount} analysis(es) failed` : ''}.`
+            title: "Upload successful, Analysis failed",
+            description: "Files uploaded but auto-analysis failed. Use 'Analyze' button manually.",
+            variant: "destructive"
           });
         }
       } else {

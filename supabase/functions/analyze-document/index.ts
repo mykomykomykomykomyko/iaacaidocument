@@ -14,11 +14,18 @@ serve(async (req) => {
   try {
     const { 
       document_id, 
+      document_ids, // New: for bulk analysis
       analysis_type = 'environmental',
       persona_id,
       custom_instructions 
     } = await req.json();
-    console.log('Analyzing document:', document_id, 'Type:', analysis_type, 'Persona:', persona_id);
+    
+    // Handle both single and bulk analysis
+    const isBulkAnalysis = document_ids && Array.isArray(document_ids) && document_ids.length > 1;
+    console.log(isBulkAnalysis ? 
+      `Bulk analyzing ${document_ids.length} documents: ${document_ids.join(', ')}` : 
+      `Analyzing document: ${document_id}`, 
+      'Type:', analysis_type, 'Persona:', persona_id);
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -31,16 +38,42 @@ serve(async (req) => {
       throw new Error('Gemini API key not configured');
     }
 
-    // Fetch document from database
-    console.log('Fetching document content...');
-    const { data: document, error: docError } = await supabase
-      .from('documents')
-      .select('*')
-      .eq('id', document_id)
-      .single();
+    // Fetch document(s) from database
+    let documents = [];
+    let combinedContent = '';
+    let combinedTitle = '';
+    
+    if (isBulkAnalysis) {
+      console.log('Fetching multiple documents for bulk analysis...');
+      const { data: docs, error: docsError } = await supabase
+        .from('documents')
+        .select('*')
+        .in('id', document_ids);
+      
+      if (docsError || !docs || docs.length === 0) {
+        throw new Error(`Documents not found: ${docsError?.message}`);
+      }
+      
+      documents = docs;
+      combinedTitle = `Bulk Analysis of ${docs.length} Documents`;
+      combinedContent = docs.map(doc => 
+        `=== DOCUMENT: ${doc.title} ===\n${doc.content || 'No content available'}\n\n`
+      ).join('');
+    } else {
+      console.log('Fetching single document...');
+      const { data: document, error: docError } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('id', document_id)
+        .single();
 
-    if (docError || !document) {
-      throw new Error(`Document not found: ${docError?.message}`);
+      if (docError || !document) {
+        throw new Error(`Document not found: ${docError?.message}`);
+      }
+      
+      documents = [document];
+      combinedTitle = document.title;
+      combinedContent = document.content || 'No content available';
     }
 
     // Fetch persona if specified
@@ -61,20 +94,22 @@ serve(async (req) => {
 
     // Generate descriptive analysis title using AI
     console.log('Generating analysis title...');
-    const titlePrompt = `Based on this document title and content, create a concise, descriptive analysis title (max 60 characters):
+    const titlePrompt = `Based on ${isBulkAnalysis ? 'these documents' : 'this document'}, create a concise, descriptive analysis title (max 60 characters):
 
-Document Title: ${document.title}
-Content Preview: ${document.content?.substring(0, 500) || 'No content preview'}
+${isBulkAnalysis ? 
+  `Bulk Analysis of ${documents.length} Documents:\n${documents.map(d => `- ${d.title}`).join('\n')}\n\nCombined Content Preview: ${combinedContent.substring(0, 500)}` :
+  `Document Title: ${combinedTitle}\nContent Preview: ${combinedContent.substring(0, 500)}`
+}
 
-Generate a title that summarizes what this analysis covers. Format: "[Analysis Type] - [Key Topic/Location]"
+Generate a title that summarizes what this analysis covers. Format: "[Analysis Type] - [Key Topic/Focus]"
 Examples: 
 - "Environmental Impact - Fraser River Project"
-- "Wildlife Assessment - Northern Caribou Habitat"
-- "Water Quality Analysis - Mining Operations"
+- "Bulk Assessment - Mining Operations Review"
+- "Combined Analysis - Wildlife & Water Quality"
 
 Just return the title, nothing else.`;
 
-    let analysisTitle = `Analysis of ${document.title}`;
+    let analysisTitle = isBulkAnalysis ? combinedTitle : `Analysis of ${combinedTitle}`;
     try {
       const titleResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
         method: 'POST',
@@ -106,7 +141,7 @@ Just return the title, nothing else.`;
     const { data: analysis, error: analysisError } = await supabase
       .from('analyses')
       .insert({
-        document_id,
+        document_id: isBulkAnalysis ? document_ids[0] : document_id, // Use first document as primary reference
         title: analysisTitle,
         analysis_type,
         status: 'processing',
@@ -130,9 +165,15 @@ Just return the title, nothing else.`;
     
     let analysisPrompt = `${systemPrompt}
 
-DOCUMENT TO ANALYZE:
-Title: ${document.title}
-Content: ${document.content || 'No content available'}`;
+${isBulkAnalysis ? 
+  `DOCUMENTS TO ANALYZE (BULK ANALYSIS):
+${combinedContent}
+
+Please analyze ALL the documents above as a comprehensive set. Look for patterns, commonalities, conflicts, and overall themes across all documents.` :
+  `DOCUMENT TO ANALYZE:
+Title: ${combinedTitle}
+Content: ${combinedContent}`
+}
 
     if (custom_instructions) {
       analysisPrompt += `
@@ -145,11 +186,18 @@ ${custom_instructions}`;
 
 Please provide a comprehensive analysis in markdown format with the following structure:
 1. **Executive Summary**
-2. **Key Environmental Concerns**
+${isBulkAnalysis ? 
+  `2. **Document Overview** - Brief summary of each document analyzed
+3. **Cross-Document Patterns** - Common themes and conflicts
+4. **Combined Environmental Concerns**
+5. **Integrated Impact Assessment**
+6. **Consolidated Recommendations**` :
+  `2. **Key Environmental Concerns**
 3. **Impact Assessment Summary**
 4. **Mitigation Measures**
-5. **Recommendations**
-6. **Confidence Assessment** - Rate your confidence in this analysis from 0-100%
+5. **Recommendations**`
+}
+7. **Confidence Assessment** - Rate your confidence in this analysis from 0-100%
 
 At the end of your analysis, provide:
 
