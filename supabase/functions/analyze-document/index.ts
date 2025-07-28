@@ -13,15 +13,15 @@ serve(async (req) => {
   }
 
   try {
-    // Check OpenAI API key
-    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
-    console.log('OpenAI API Key exists:', !!openaiApiKey);
-    console.log('OpenAI API Key length:', openaiApiKey?.length || 0);
+    // Check Gemini API key
+    const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
+    console.log('Gemini API Key exists:', !!geminiApiKey);
+    console.log('Gemini API Key length:', geminiApiKey?.length || 0);
 
-    if (!openaiApiKey) {
-      console.error('OpenAI API key is missing from Supabase secrets!');
+    if (!geminiApiKey) {
+      console.error('Gemini API key is missing from Supabase secrets!');
       return new Response(JSON.stringify({ 
-        error: 'OpenAI API key is not configured in Supabase secrets. Please add OPENAI_API_KEY in Supabase Edge Function secrets.',
+        error: 'Gemini API key is not configured in Supabase secrets. Please add GEMINI_API_KEY in Supabase Edge Function secrets.',
         success: false,
         debug: {
           hasKey: false,
@@ -33,26 +33,23 @@ serve(async (req) => {
       });
     }
 
-    // Test basic OpenAI connectivity
-    console.log('Testing OpenAI API connectivity...');
-    const testResponse = await fetch('https://api.openai.com/v1/models', {
+    // Test basic Gemini connectivity
+    console.log('Testing Gemini API connectivity...');
+    const testResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${geminiApiKey}`, {
       method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
-      },
     });
 
-    console.log('OpenAI API test status:', testResponse.status);
+    console.log('Gemini API test status:', testResponse.status);
 
     if (!testResponse.ok) {
       const errorText = await testResponse.text();
-      console.error('OpenAI API test failed:', errorText);
+      console.error('Gemini API test failed:', errorText);
       return new Response(JSON.stringify({ 
-        error: `OpenAI API key is invalid or API is unreachable. Status: ${testResponse.status}`,
+        error: `Gemini API key is invalid or API is unreachable. Status: ${testResponse.status}`,
         success: false,
         debug: {
           hasKey: true,
-          keyLength: openaiApiKey.length,
+          keyLength: geminiApiKey.length,
           apiStatus: testResponse.status,
           apiError: errorText
         }
@@ -63,16 +60,16 @@ serve(async (req) => {
     }
 
     const models = await testResponse.json();
-    console.log('OpenAI API working! Available models:', models.data?.length || 0);
+    console.log('Gemini API working! Available models:', models.models?.length || 0);
 
     return new Response(JSON.stringify({
       success: true,
-      message: 'OpenAI API key is configured and working!',
+      message: 'Gemini API key is configured and working!',
       debug: {
         hasKey: true,
-        keyLength: openaiApiKey.length,
+        keyLength: geminiApiKey.length,
         apiWorking: true,
-        modelsAvailable: models.data?.length || 0
+        modelsAvailable: models.models?.length || 0
       }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
