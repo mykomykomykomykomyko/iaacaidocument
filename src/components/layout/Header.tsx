@@ -1,8 +1,6 @@
 import { Button } from "@/components/ui/button";
-
 export const Header = () => {
-  return (
-    <header className="border-b bg-card shadow-sm">
+  return <header className="border-b bg-card shadow-sm">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
@@ -22,24 +20,13 @@ export const Header = () => {
           </div>
           
           <nav className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm">
-              Documents
-            </Button>
-            <Button variant="ghost" size="sm">
-              Analysis
-            </Button>
-            <Button variant="ghost" size="sm">
-              Personas
-            </Button>
-            <Button variant="ghost" size="sm">
-              Reports
-            </Button>
-            <Button variant="outline" size="sm">
-              Settings
-            </Button>
+            
+            
+            
+            
+            
           </nav>
         </div>
       </div>
-    </header>
-  );
+    </header>;
 };
