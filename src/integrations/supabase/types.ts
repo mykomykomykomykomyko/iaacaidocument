@@ -108,7 +108,7 @@ export type Database = {
           storage_path: string | null
           title: string
           uploaded_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           description?: string | null
@@ -125,7 +125,7 @@ export type Database = {
           storage_path?: string | null
           title: string
           uploaded_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           description?: string | null
@@ -142,7 +142,7 @@ export type Database = {
           storage_path?: string | null
           title?: string
           uploaded_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
