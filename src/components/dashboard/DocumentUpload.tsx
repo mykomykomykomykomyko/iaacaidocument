@@ -21,6 +21,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
+import { triggerAnalysisForDocument } from "@/utils/triggerAnalysis";
 
 export const DocumentUpload = () => {
   const [isPlainText, setIsPlainText] = useState(false);
@@ -37,6 +39,7 @@ export const DocumentUpload = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [documentToDelete, setDocumentToDelete] = useState<any>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [autoAnalyze, setAutoAnalyze] = useState(false);
   const { toast } = useToast();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -74,6 +77,8 @@ export const DocumentUpload = () => {
     setUploadStatus('uploading');
 
     try {
+      let uploadedDocument;
+      
       if (isPlainText) {
         // Handle plain text upload by creating document directly
         const { data, error } = await supabase
@@ -93,6 +98,7 @@ export const DocumentUpload = () => {
           .single();
 
         if (error) throw error;
+        uploadedDocument = data;
       } else {
         // Handle file upload
         const formData = new FormData();
@@ -105,13 +111,40 @@ export const DocumentUpload = () => {
         });
 
         if (error) throw error;
+        uploadedDocument = data?.document;
       }
 
       setUploadStatus('success');
-      toast({
-        title: "Upload successful",
-        description: `Document uploaded successfully. Use "Analyze" button to start AI analysis.`
-      });
+      
+      // Auto-analyze if checkbox is checked
+      if (autoAnalyze && uploadedDocument?.id) {
+        try {
+          const analysisResult = await triggerAnalysisForDocument(uploadedDocument.id);
+          if (analysisResult.success) {
+            toast({
+              title: "Upload & Analysis Started",
+              description: "Document uploaded and analysis has been started automatically."
+            });
+          } else {
+            toast({
+              title: "Upload successful, Analysis failed",
+              description: "Document uploaded but auto-analysis failed. Use 'Analyze' button manually.",
+              variant: "destructive"
+            });
+          }
+        } catch (error) {
+          toast({
+            title: "Upload successful, Analysis failed",
+            description: "Document uploaded but auto-analysis failed. Use 'Analyze' button manually.",
+            variant: "destructive"
+          });
+        }
+      } else {
+        toast({
+          title: "Upload successful",
+          description: autoAnalyze ? "Document uploaded successfully." : `Document uploaded successfully. Use "Analyze" button to start AI analysis.`
+        });
+      }
 
       // Reset form
       setFile(null);
@@ -305,6 +338,19 @@ export const DocumentUpload = () => {
             placeholder="Brief description of the document"
             rows={3}
           />
+        </div>
+
+        {/* Auto-analyze checkbox */}
+        <div className="flex items-center space-x-8pt p-12pt border rounded-lg bg-muted/20">
+          <Checkbox
+            id="auto-analyze"
+            checked={autoAnalyze}
+            onCheckedChange={(checked) => setAutoAnalyze(checked === true)}
+          />
+          <Label htmlFor="auto-analyze" className="text-body cursor-pointer">
+            Automatically analyze document after upload
+          </Label>
+          <Sparkles className="h-4 w-4 text-primary" />
         </div>
 
         <Button 
