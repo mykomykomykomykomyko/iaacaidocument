@@ -18,8 +18,8 @@ serve(async (req) => {
   }
 
   try {
-    const { message, persona = 'general', conversationHistory = [] } = await req.json();
-    console.log('AI Analyst Chat request:', { message, persona });
+    const { message, persona_id, conversationHistory = [] } = await req.json();
+    console.log('AI Analyst Chat request:', { message, persona_id });
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -32,6 +32,27 @@ serve(async (req) => {
 
     if (!geminiApiKey) {
       throw new Error('Gemini API key not configured');
+    }
+
+    // Fetch persona from database if specified
+    let selectedPersona = null;
+    let systemPrompt = 'You are an Environmental Analyst with expertise in impact assessments, environmental regulations, and sustainability practices.';
+    
+    if (persona_id) {
+      console.log('Fetching persona from database...');
+      const { data: personaData, error: personaError } = await supabase
+        .from('personas')
+        .select('id, name, system_prompt, description')
+        .eq('id', persona_id)
+        .maybeSingle();
+      
+      if (personaError) {
+        console.error('Error fetching persona:', personaError);
+      } else if (personaData) {
+        selectedPersona = personaData;
+        systemPrompt = personaData.system_prompt || systemPrompt;
+        console.log('Using persona:', personaData.name);
+      }
     }
 
     // Step 1: Search through uploaded documents
@@ -107,27 +128,17 @@ serve(async (req) => {
       }
     }
 
-    // Step 3: Generate response using OpenAI with context
-    const personaPrompts = {
-      'general': 'You are an Environmental Analyst with expertise in impact assessments, environmental regulations, and sustainability practices.',
-      'fish-habitat': 'You are a Fish Habitat Specialist with deep knowledge of aquatic ecosystems, fish biology, and habitat protection measures.',
-      'water-quality': 'You are a Water Quality Expert specializing in water monitoring, pollution control, and aquatic environmental standards.',
-      'caribou-biologist': 'You are a Caribou Biologist with expertise in caribou ecology, migration patterns, and wildlife conservation.',
-      'indigenous-knowledge': 'You are an Indigenous Knowledge Keeper with understanding of traditional environmental practices and indigenous perspectives on land stewardship.'
-    };
+    // Step 3: Generate response using Gemini with context
+    const conversationContext = conversationHistory.length > 0 
+      ? `\n\nCONVERSATION HISTORY:\n${conversationHistory.map((msg: Message) => `${msg.role}: ${msg.content}`).join('\n')}`
+      : '';
 
-    const systemPrompt = personaPrompts[persona as keyof typeof personaPrompts] || personaPrompts.general;
-    
     let contextPrompt = '';
     if (documentContext) {
       contextPrompt = `\n\nRELEVANT UPLOADED DOCUMENTS:\n${documentContext}`;
     } else if (onlineContext) {
       contextPrompt = `\n\nONLINE RESEARCH CONTEXT:\n${onlineContext}`;
     }
-
-    const conversationContext = conversationHistory.length > 0 
-      ? `\n\nCONVERSATION HISTORY:\n${conversationHistory.map((msg: Message) => `${msg.role}: ${msg.content}`).join('\n')}`
-      : '';
 
     const fullPrompt = `${systemPrompt}
 

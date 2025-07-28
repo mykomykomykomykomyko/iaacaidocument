@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageSquare, Send, Bot, User, Sparkles, Search, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 interface Message {
   id: string;
@@ -17,22 +18,42 @@ interface Message {
   timestamp: Date;
 }
 
+interface Persona {
+  id: string;
+  name: string;
+  description?: string;
+  avatar_emoji?: string;
+}
+
 export const ChatbotInterface = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
-  const [persona, setPersona] = useState("general");
+  const [persona, setPersona] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  const personas = {
-    'general': 'Environmental Analyst',
-    'fish-habitat': 'Fish Habitat Specialist',
-    'water-quality': 'Water Quality Expert', 
-    'caribou-biologist': 'Caribou Biologist',
-    'indigenous-knowledge': 'Indigenous Knowledge Keeper'
-  };
+  // Fetch personas from database
+  const { data: personas, isLoading: personasLoading } = useQuery({
+    queryKey: ['personas'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('personas')
+        .select('id, name, description, avatar_emoji')
+        .order('name');
+      
+      if (error) throw error;
+      return data as Persona[];
+    }
+  });
+
+  // Set default persona when personas are loaded
+  useEffect(() => {
+    if (personas && personas.length > 0 && !persona) {
+      setPersona(personas[0].id);
+    }
+  }, [personas, persona]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -60,7 +81,7 @@ export const ChatbotInterface = () => {
       const { data, error } = await supabase.functions.invoke('ai-analyst-chat', {
         body: {
           message: inputMessage,
-          persona: persona,
+          persona_id: persona,
           conversationHistory: messages.slice(-5) // Send last 5 messages for context
         }
       });
@@ -127,14 +148,19 @@ export const ChatbotInterface = () => {
               <span>AI Analyst</span>
             </CardTitle>
             <div className="flex items-center space-x-12pt">
-              <Select value={persona} onValueChange={setPersona}>
+              <Select value={persona} onValueChange={setPersona} disabled={personasLoading}>
                 <SelectTrigger className="w-48">
                   <User className="h-4 w-4 mr-2" />
-                  <SelectValue />
+                  <SelectValue placeholder={personasLoading ? "Loading..." : "Select persona"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(personas).map(([key, name]) => (
-                    <SelectItem key={key} value={key}>{name}</SelectItem>
+                  {personas?.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      <div className="flex items-center space-x-8pt">
+                        {p.avatar_emoji && <span>{p.avatar_emoji}</span>}
+                        <span>{p.name}</span>
+                      </div>
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
