@@ -112,12 +112,18 @@ Focus on actionable insights and specific recommendations.`
       .from('analyses')
       .insert({
         document_id,
+        user_id: null, // Allow anonymous analyses
+        persona_id: crypto.randomUUID(), // Generate a persona ID
+        title: document.title || 'Environmental Analysis',
+        topic: 'Environmental Assessment',
         analysis_type,
         persona,
+        status: 'completed',
         analysis_content,
         confidence_score,
         key_findings: extractKeyFindings(analysis_content),
-        recommendations: extractRecommendations(analysis_content)
+        recommendations: extractRecommendations(analysis_content),
+        completed_at: new Date().toISOString()
       })
       .select()
       .single();
