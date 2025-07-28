@@ -2,7 +2,7 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
+const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
@@ -19,14 +19,14 @@ serve(async (req) => {
   }
 
   try {
-    const { document_id, persona = 'general', analysis_type = 'comprehensive' } = await req.json();
+    const { document_id, analysis_type = 'environmental' } = await req.json();
 
-    console.log(`Starting analysis for document ${document_id} with persona ${persona}`);
+    console.log(`Starting analysis for document ${document_id} with type ${analysis_type}`);
 
-    if (!anthropicApiKey) {
-      console.error('ANTHROPIC_API_KEY not configured');
+    if (!openaiApiKey) {
+      console.error('OPENAI_API_KEY not configured');
       return new Response(JSON.stringify({ 
-        error: 'ANTHROPIC_API_KEY not configured',
+        error: 'OPENAI_API_KEY not configured',
         success: false 
       }), {
         status: 500,
@@ -52,14 +52,15 @@ serve(async (req) => {
       });
     }
 
-    console.log(`Analyzing document: ${document.title}`);
+    const documentTitle = document.metadata?.title || document.original_filename;
+    console.log(`Analyzing document: ${documentTitle}`);
     console.log(`Text length: ${document.extracted_text?.length || 0} characters`);
 
     // Create analysis prompt
-    const analysisPrompt = `Please analyze this environmental document and provide a comprehensive summary:
+    const analysisPrompt = `Please analyze this environmental document and provide a comprehensive assessment:
 
-Document Title: ${document.title}
-Document Type: ${document.file_type}
+Document Title: ${documentTitle}
+Document Type: ${document.mime_type}
 File Size: ${document.file_size ? Math.round(document.file_size / 1024) : 'unknown'} KB
 
 Content to analyze:
@@ -67,39 +68,43 @@ ${document.extracted_text || 'No text content available for analysis.'}
 
 Please provide:
 1. Executive Summary (2-3 sentences)
-2. Key Environmental Findings (3-5 main points)
-3. Potential Environmental Impacts
-4. Recommendations for next steps
+2. Key Environmental Findings (3-5 main points as bullet points)
+3. Potential Environmental Impacts (specific impacts with severity)
+4. Recommendations (actionable next steps)
 5. Compliance and regulatory considerations
 
-Focus on actionable insights and specific environmental concerns.`;
+Format your response clearly with headers and bullet points for easy parsing.`;
 
-    // Analyze document with Claude
-    console.log('Calling Anthropic API...');
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    // Analyze document with OpenAI
+    console.log('Calling OpenAI API...');
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${anthropicApiKey}`,
+        'Authorization': `Bearer ${openaiApiKey}`,
         'Content-Type': 'application/json',
-        'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
-        max_tokens: 3000,
+        model: 'gpt-4o-mini',
         messages: [
+          {
+            role: 'system',
+            content: 'You are an expert environmental analyst working for the Impact Assessment Agency of Canada. Provide detailed, actionable environmental assessments.'
+          },
           {
             role: 'user',
             content: analysisPrompt
           }
-        ]
+        ],
+        max_tokens: 3000,
+        temperature: 0.3
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`Anthropic API error: ${response.status} ${response.statusText} - ${errorText}`);
+      console.error(`OpenAI API error: ${response.status} ${response.statusText} - ${errorText}`);
       return new Response(JSON.stringify({ 
-        error: `Anthropic API error: ${response.status} ${response.statusText}`,
+        error: `OpenAI API error: ${response.status} ${response.statusText}`,
         success: false 
       }), {
         status: 500,
@@ -107,38 +112,35 @@ Focus on actionable insights and specific environmental concerns.`;
       });
     }
 
-    const claudeData = await response.json();
-    const analysis_content = claudeData.content[0].text;
+    const openaiData = await response.json();
+    const analysisContent = openaiData.choices[0].message.content;
 
     console.log('Analysis completed, saving to database...');
 
     // Generate confidence score based on content available
     const textLength = document.extracted_text?.length || 0;
-    const confidence_score = Math.min(95, Math.max(60, 
-      70 + (textLength > 1000 ? 15 : 0) + (textLength > 5000 ? 10 : 0)
+    const confidence_score = Math.min(0.95, Math.max(0.60, 
+      0.70 + (textLength > 1000 ? 0.15 : 0) + (textLength > 5000 ? 0.10 : 0)
     ));
 
-    // Extract key findings and recommendations
-    const key_findings = extractKeyFindings(analysis_content);
-    const recommendations = extractRecommendations(analysis_content);
+    // Extract structured information
+    const keyFindings = extractKeyFindings(analysisContent);
+    const recommendations = extractRecommendations(analysisContent);
+    const environmentalImpact = extractEnvironmentalImpacts(analysisContent);
 
     // Save analysis to database
     const { data: analysis, error: analysisError } = await supabase
       .from('analyses')
       .insert({
         document_id,
-        user_id: null, // Allow anonymous analyses
-        persona_id: crypto.randomUUID(), // Generate a persona ID
-        title: `Analysis: ${document.title}`,
-        topic: 'Environmental Assessment',
-        analysis_type,
-        persona,
-        status: 'completed',
-        analysis_content,
+        title: `Environmental Analysis: ${documentTitle}`,
+        summary: extractSummary(analysisContent),
+        key_findings: keyFindings,
+        environmental_impact: environmentalImpact,
+        recommendations: recommendations,
         confidence_score,
-        key_findings,
-        recommendations,
-        completed_at: new Date().toISOString()
+        analysis_type,
+        status: 'completed'
       })
       .select()
       .single();
@@ -176,6 +178,19 @@ Focus on actionable insights and specific environmental concerns.`;
   }
 });
 
+function extractSummary(content: string): string {
+  const lines = content.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line.toLowerCase().includes('executive summary') || line.toLowerCase().includes('summary')) {
+      // Get the next few lines for summary
+      const summaryLines = lines.slice(i + 1, i + 4).filter(l => l.trim().length > 0);
+      return summaryLines.join(' ').trim();
+    }
+  }
+  return content.substring(0, 200) + '...';
+}
+
 function extractKeyFindings(content: string): string[] {
   const findings: string[] = [];
   const lines = content.split('\n');
@@ -184,18 +199,15 @@ function extractKeyFindings(content: string): string[] {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     
-    // Check if we're in the key findings section
     if (line.toLowerCase().includes('key') && line.toLowerCase().includes('finding')) {
       inFindingsSection = true;
       continue;
     }
     
-    // Stop if we hit another section
     if (inFindingsSection && line.toLowerCase().includes('impact') && line.includes(':')) {
       break;
     }
     
-    // Extract numbered or bulleted items
     if (inFindingsSection && (line.match(/^\d+\./) || line.match(/^[\-\*•]/))) {
       const finding = line.replace(/^\d+\./, '').replace(/^[\-\*•]/, '').trim();
       if (finding.length > 20) {
@@ -204,7 +216,7 @@ function extractKeyFindings(content: string): string[] {
     }
   }
   
-  return findings.slice(0, 5); // Return top 5 findings
+  return findings.slice(0, 5);
 }
 
 function extractRecommendations(content: string): string[] {
@@ -215,18 +227,15 @@ function extractRecommendations(content: string): string[] {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     
-    // Check if we're in the recommendations section
     if (line.toLowerCase().includes('recommendation')) {
       inRecommendationsSection = true;
       continue;
     }
     
-    // Stop if we hit another section
     if (inRecommendationsSection && line.toLowerCase().includes('compliance') && line.includes(':')) {
       break;
     }
     
-    // Extract numbered or bulleted items
     if (inRecommendationsSection && (line.match(/^\d+\./) || line.match(/^[\-\*•]/))) {
       const rec = line.replace(/^\d+\./, '').replace(/^[\-\*•]/, '').trim();
       if (rec.length > 20) {
@@ -235,5 +244,42 @@ function extractRecommendations(content: string): string[] {
     }
   }
   
-  return recommendations.slice(0, 5); // Return top 5 recommendations
+  return recommendations.slice(0, 5);
+}
+
+function extractEnvironmentalImpacts(content: string): any {
+  const impacts = {
+    severity: 'medium',
+    categories: [] as string[],
+    details: ''
+  };
+  
+  const lines = content.split('\n');
+  let inImpactSection = false;
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    
+    if (line.toLowerCase().includes('environmental impact')) {
+      inImpactSection = true;
+      continue;
+    }
+    
+    if (inImpactSection && line.toLowerCase().includes('recommendation') && line.includes(':')) {
+      break;
+    }
+    
+    if (inImpactSection && line.length > 20) {
+      impacts.details += line + ' ';
+      
+      // Detect categories
+      if (line.toLowerCase().includes('air')) impacts.categories.push('Air Quality');
+      if (line.toLowerCase().includes('water')) impacts.categories.push('Water Resources');
+      if (line.toLowerCase().includes('soil')) impacts.categories.push('Soil');
+      if (line.toLowerCase().includes('wildlife')) impacts.categories.push('Wildlife');
+      if (line.toLowerCase().includes('noise')) impacts.categories.push('Noise');
+    }
+  }
+  
+  return impacts;
 }

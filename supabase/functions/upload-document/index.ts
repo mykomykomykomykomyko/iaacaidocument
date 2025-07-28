@@ -122,19 +122,20 @@ serve(async (req) => {
     const { data: document, error: dbError } = await supabase
       .from('documents')
       .insert({
-        title,
-        description,
-        file_name: file.name,
-        file_type: file.type,
+        filename: `${crypto.randomUUID()}.${file.name.split('.').pop()}`,
+        original_filename: file.name,
         file_size: file.size,
+        mime_type: file.type,
+        storage_path: `pdfs/${crypto.randomUUID()}.${file.name.split('.').pop()}`,
         extracted_text: extractedText,
         metadata: {
+          title,
+          description,
           originalName: file.name,
           uploadedAt: new Date().toISOString(),
           textLength: extractedText.length
         },
-        processing_status: 'completed',
-        user_id: null // Allow anonymous uploads
+        processing_status: 'completed'
       })
       .select()
       .single();

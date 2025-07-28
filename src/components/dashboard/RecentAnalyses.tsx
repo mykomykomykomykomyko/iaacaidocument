@@ -9,11 +9,12 @@ import { formatDistanceToNow } from "date-fns";
 interface Analysis {
   id: string;
   title: string;
-  persona: string;
+  summary?: string;
+  analysis_type: string;
   status: string;
   created_at: string;
-  confidence_score: number;
-  analysis_content: string;
+  confidence_score?: number;
+  key_findings?: string[];
 }
 
 const getStatusColor = (status: string) => {
@@ -52,11 +53,12 @@ export const RecentAnalyses = () => {
         .select(`
           id,
           title,
-          persona,
+          summary,
+          analysis_type,
           status,
           created_at,
           confidence_score,
-          analysis_content
+          key_findings
         `)
         .order('created_at', { ascending: false })
         .limit(5);
@@ -105,7 +107,7 @@ export const RecentAnalyses = () => {
                 <div className="flex items-center space-x-16pt text-body text-muted-foreground mb-12pt">
                   <div className="flex items-center space-x-4pt">
                     <User className="h-3 w-3" />
-                    <span>{getPersonaDisplayName(analysis.persona)}</span>
+                    <span>{analysis.analysis_type || 'Environmental'}</span>
                   </div>
                   <div className="flex items-center space-x-4pt">
                     <Clock className="h-3 w-3" />
@@ -116,11 +118,11 @@ export const RecentAnalyses = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-8pt">
                     <Badge variant="outline" className="capitalize">
-                      {analysis.persona.replace('-', ' ')}
+                      {analysis.analysis_type.replace('-', ' ')}
                     </Badge>
                     {analysis.confidence_score && (
-                      <span className={`text-body font-medium ${getConfidenceColor(analysis.confidence_score)}`}>
-                        {analysis.confidence_score}% confidence
+                      <span className={`text-body font-medium ${getConfidenceColor(analysis.confidence_score * 100)}`}>
+                        {Math.round(analysis.confidence_score * 100)}% confidence
                       </span>
                     )}
                   </div>

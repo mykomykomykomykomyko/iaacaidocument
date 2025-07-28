@@ -46,13 +46,14 @@ export const StatsCards = () => {
     }
   });
 
-  const { data: personasCount } = useQuery({
-    queryKey: ['personas-count'],
+  const { data: analysisTypesCount } = useQuery({
+    queryKey: ['analysis-types-count'],
     queryFn: async () => {
-      const { count } = await supabase
-        .from('personas')
-        .select('*', { count: 'exact', head: true });
-      return count || 0;
+      const { data } = await supabase
+        .from('analyses')
+        .select('analysis_type');
+      const uniqueTypes = new Set(data?.map(a => a.analysis_type) || []);
+      return uniqueTypes.size;
     }
   });
 
@@ -82,10 +83,10 @@ export const StatsCards = () => {
         description="Topic-based extractions"
       />
       <StatCard
-        title="Active Personas"
-        value={personasCount?.toString() || "0"}
+        title="Analysis Types"
+        value={analysisTypesCount?.toString() || "0"}
         icon={<Users className="h-4 w-4" />}
-        description="Specialist perspectives"
+        description="Different analysis methods"
       />
       <StatCard
         title="Verified Reports"

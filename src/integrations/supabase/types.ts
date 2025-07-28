@@ -16,64 +16,52 @@ export type Database = {
     Tables: {
       analyses: {
         Row: {
-          analysis_content: string
-          analysis_type: string | null
-          completed_at: string | null
+          analysis_type: string
           confidence_score: number | null
           created_at: string
           document_id: string
+          environmental_impact: Json | null
           id: string
-          key_findings: Json | null
-          persona: string | null
-          persona_id: string
+          key_findings: string[] | null
+          metadata: Json | null
           recommendations: string[] | null
-          source_count: number | null
-          source_references: Json | null
-          status: string | null
+          status: string
           summary: string | null
           title: string
-          topic: string
-          user_id: string
+          updated_at: string
+          user_id: string | null
         }
         Insert: {
-          analysis_content: string
-          analysis_type?: string | null
-          completed_at?: string | null
+          analysis_type?: string
           confidence_score?: number | null
           created_at?: string
           document_id: string
+          environmental_impact?: Json | null
           id?: string
-          key_findings?: Json | null
-          persona?: string | null
-          persona_id: string
+          key_findings?: string[] | null
+          metadata?: Json | null
           recommendations?: string[] | null
-          source_count?: number | null
-          source_references?: Json | null
-          status?: string | null
+          status?: string
           summary?: string | null
           title: string
-          topic: string
-          user_id: string
+          updated_at?: string
+          user_id?: string | null
         }
         Update: {
-          analysis_content?: string
-          analysis_type?: string | null
-          completed_at?: string | null
+          analysis_type?: string
           confidence_score?: number | null
           created_at?: string
           document_id?: string
+          environmental_impact?: Json | null
           id?: string
-          key_findings?: Json | null
-          persona?: string | null
-          persona_id?: string
+          key_findings?: string[] | null
+          metadata?: Json | null
           recommendations?: string[] | null
-          source_count?: number | null
-          source_references?: Json | null
-          status?: string | null
+          status?: string
           summary?: string | null
           title?: string
-          topic?: string
-          user_id?: string
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -83,169 +71,94 @@ export type Database = {
             referencedRelation: "documents"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "analyses_persona_id_fkey"
-            columns: ["persona_id"]
-            isOneToOne: false
-            referencedRelation: "personas"
-            referencedColumns: ["id"]
-          },
         ]
       }
       documents: {
         Row: {
-          description: string | null
+          created_at: string
           extracted_text: string | null
-          file_name: string
-          file_size: number | null
-          file_type: string | null
+          file_size: number
+          filename: string
           id: string
           metadata: Json | null
-          processed_at: string | null
-          processing_status: string | null
-          source_registry: string | null
-          status: string | null
-          storage_path: string | null
-          title: string
-          uploaded_at: string
+          mime_type: string
+          original_filename: string
+          processing_status: string
+          storage_path: string
+          updated_at: string
+          upload_date: string
           user_id: string | null
         }
         Insert: {
-          description?: string | null
+          created_at?: string
           extracted_text?: string | null
-          file_name: string
-          file_size?: number | null
-          file_type?: string | null
+          file_size: number
+          filename: string
           id?: string
           metadata?: Json | null
-          processed_at?: string | null
-          processing_status?: string | null
-          source_registry?: string | null
-          status?: string | null
-          storage_path?: string | null
-          title: string
-          uploaded_at?: string
+          mime_type?: string
+          original_filename: string
+          processing_status?: string
+          storage_path: string
+          updated_at?: string
+          upload_date?: string
           user_id?: string | null
         }
         Update: {
-          description?: string | null
+          created_at?: string
           extracted_text?: string | null
-          file_name?: string
-          file_size?: number | null
-          file_type?: string | null
+          file_size?: number
+          filename?: string
           id?: string
           metadata?: Json | null
-          processed_at?: string | null
-          processing_status?: string | null
-          source_registry?: string | null
-          status?: string | null
-          storage_path?: string | null
-          title?: string
-          uploaded_at?: string
+          mime_type?: string
+          original_filename?: string
+          processing_status?: string
+          storage_path?: string
+          updated_at?: string
+          upload_date?: string
           user_id?: string | null
-        }
-        Relationships: []
-      }
-      personas: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          name: string
-          prompt_template: string | null
-          specialization: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name: string
-          prompt_template?: string | null
-          specialization: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name?: string
-          prompt_template?: string | null
-          specialization?: string
         }
         Relationships: []
       }
       profiles: {
         Row: {
           created_at: string
-          department: string | null
+          email: string | null
           first_name: string | null
           id: string
           last_name: string | null
+          organization: string | null
+          preferences: Json | null
           role: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
-          department?: string | null
+          email?: string | null
           first_name?: string | null
           id?: string
           last_name?: string | null
+          organization?: string | null
+          preferences?: Json | null
           role?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
-          department?: string | null
+          email?: string | null
           first_name?: string | null
           id?: string
           last_name?: string | null
+          organization?: string | null
+          preferences?: Json | null
           role?: string | null
           updated_at?: string
           user_id?: string
         }
         Relationships: []
-      }
-      search_results: {
-        Row: {
-          created_at: string
-          document_id: string
-          id: string
-          matched_content: string | null
-          persona: string
-          query: string
-          relevance_score: number
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          document_id: string
-          id?: string
-          matched_content?: string | null
-          persona?: string
-          query: string
-          relevance_score?: number
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          document_id?: string
-          id?: string
-          matched_content?: string | null
-          persona?: string
-          query?: string
-          relevance_score?: number
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "search_results_document_id_fkey"
-            columns: ["document_id"]
-            isOneToOne: false
-            referencedRelation: "documents"
-            referencedColumns: ["id"]
-          },
-        ]
       }
     }
     Views: {
