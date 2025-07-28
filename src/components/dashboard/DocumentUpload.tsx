@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { AnalysisConfigDialog } from "./AnalysisConfigDialog";
 import { DocumentViewerDialog } from "./DocumentViewerDialog";
+import { PDFViewerDialog } from "./PDFViewerDialog";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -37,6 +38,7 @@ export const DocumentUpload = () => {
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [analysisDialogOpen, setAnalysisDialogOpen] = useState(false);
   const [viewerDialogOpen, setViewerDialogOpen] = useState(false);
+  const [pdfViewerDialogOpen, setPdfViewerDialogOpen] = useState(false);
   const [documentForViewing, setDocumentForViewing] = useState<any>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [documentToDelete, setDocumentToDelete] = useState<any>(null);
@@ -280,7 +282,11 @@ export const DocumentUpload = () => {
 
   const handleViewDocument = (document: any) => {
     setDocumentForViewing(document);
-    setViewerDialogOpen(true);
+    if (document.mime_type.includes('pdf')) {
+      setPdfViewerDialogOpen(true);
+    } else {
+      setViewerDialogOpen(true);
+    }
   };
 
   const handleDeleteDocument = (document: any) => {
@@ -545,6 +551,12 @@ export const DocumentUpload = () => {
           document={documentForViewing}
           open={viewerDialogOpen}
           onOpenChange={setViewerDialogOpen}
+        />
+
+        <PDFViewerDialog
+          document={documentForViewing}
+          open={pdfViewerDialogOpen}
+          onOpenChange={setPdfViewerDialogOpen}
         />
 
         {/* Delete Confirmation Dialog */}

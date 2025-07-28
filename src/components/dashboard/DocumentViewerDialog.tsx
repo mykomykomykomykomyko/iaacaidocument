@@ -9,6 +9,8 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FileText, Eye, AlertCircle } from "lucide-react";
+import { PDFRasterizer } from "./PDFRasterizer";
+import { useState, useEffect } from "react";
 
 interface Document {
   id: string;
@@ -28,6 +30,32 @@ interface DocumentViewerDialogProps {
 }
 
 export const DocumentViewerDialog = ({ document, open, onOpenChange }: DocumentViewerDialogProps) => {
+  const [pdfArrayBuffer, setPdfArrayBuffer] = useState<ArrayBuffer | null>(null);
+  const [loadingPDF, setLoadingPDF] = useState(false);
+
+  // Load PDF data when document changes and it's a PDF
+  useEffect(() => {
+    const loadPDFData = async () => {
+      if (!document || !document.mime_type.includes('pdf') || !open) {
+        setPdfArrayBuffer(null);
+        return;
+      }
+
+      setLoadingPDF(true);
+      try {
+        // For PDFs, we need to fetch the actual file data
+        // This is a placeholder - you might need to implement actual PDF file fetching
+        // For now, we'll show the rasterizer when the document is opened
+        console.log('PDF document detected, rasterization available');
+      } catch (error) {
+        console.error('Error loading PDF data:', error);
+      } finally {
+        setLoadingPDF(false);
+      }
+    };
+
+    loadPDFData();
+  }, [document, open]);
   if (!document) return null;
 
   const formatFileSize = (bytes: number) => {
