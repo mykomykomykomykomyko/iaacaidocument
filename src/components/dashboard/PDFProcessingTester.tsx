@@ -766,7 +766,7 @@ export const PDFProcessingTester = ({
                   <Textarea id="prompt" placeholder="Enter your prompt for AI analysis" value={geminiPrompt} onChange={e => setGeminiPrompt(e.target.value)} rows={3} />
                 </div>
 
-                <Button onClick={processSelectedPagesWithGemini} disabled={selectedPages.size === 0 || isProcessingGemini} className="w-full bg-gradient-primary">
+                <Button onClick={processSelectedPagesWithGemini} disabled={selectedPages.size === 0 || isProcessingGemini} className="w-full bg-gradient-primary bg-red-700 hover:bg-red-600 text-slate-50">
                   <Send className="h-4 w-4 mr-2" />
                   {isProcessingGemini ? 'Processing...' : `Process ${selectedPages.size} Selected Page${selectedPages.size !== 1 ? 's' : ''} with Gemini`}
                 </Button>
