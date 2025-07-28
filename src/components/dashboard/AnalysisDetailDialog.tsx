@@ -228,7 +228,7 @@ export const AnalysisDetailDialog = ({ analysis, open, onOpenChange }: AnalysisD
                   <div className="text-body leading-relaxed">
                     <ReactMarkdown 
                       components={{
-                        h1: ({ children }) => <h1 className="text-lg font-semibold mb-16pt mt-24pt">{children}</h1>,
+                        h1: ({ children }) => <h1 className="text-2xl font-semibold mb-16pt mt-24pt">{children}</h1>,
                         h2: ({ children }) => <h2 className="text-base font-semibold mb-12pt mt-20pt">{children}</h2>,
                         h3: ({ children }) => <h3 className="text-body font-semibold mb-8pt mt-16pt">{children}</h3>,
                         p: ({ children }) => <p className="mb-12pt text-body leading-relaxed">{children}</p>,

@@ -379,7 +379,7 @@ const PersonasManagement = () => {
         <div className="space-y-32pt">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-foreground mb-8pt">AI Analysis Personas</h1>
+              <h1 className="text-4xl font-bold text-foreground mb-8pt">AI Analysis Personas</h1>
               <p className="text-body text-muted-foreground">
                 Manage specialized AI personas for document analysis
               </p>
