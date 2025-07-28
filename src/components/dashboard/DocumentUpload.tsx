@@ -23,6 +23,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { triggerAnalysisForDocument, triggerBulkAnalysis } from "@/utils/triggerAnalysis";
+import { extractPDFText } from "@/utils/pdfParser";
 
 export const DocumentUpload = () => {
   const [isPlainText, setIsPlainText] = useState(false);
@@ -111,18 +112,64 @@ export const DocumentUpload = () => {
         for (let i = 0; i < files.length; i++) {
           const currentFile = files[i];
           try {
-            const formData = new FormData();
-            formData.append('file', currentFile);
-            formData.append('title', files.length === 1 ? title : `${title} - ${currentFile.name.replace(/\.[^/.]+$/, "")}`);
-            formData.append('description', description);
+            // For PDF files, extract text using the new PDF parser
+            if (currentFile.type === 'application/pdf') {
+              const arrayBuffer = await currentFile.arrayBuffer();
+              try {
+                const { pagesText } = await extractPDFText(arrayBuffer);
+                const extractedText = pagesText.join('\n\n');
+                
+                // Create document directly with extracted text
+                const { data, error } = await supabase
+                  .from('documents')
+                  .insert({
+                    title: files.length === 1 ? title : `${title} - ${currentFile.name.replace(/\.[^/.]+$/, "")}`,
+                    description: description,
+                    filename: currentFile.name,
+                    original_filename: currentFile.name,
+                    mime_type: currentFile.type,
+                    storage_path: `pdf-${Date.now()}`,
+                    content: extractedText,
+                    file_size: currentFile.size,
+                    upload_status: 'uploaded'
+                  })
+                  .select()
+                  .single();
 
-            const { data, error } = await supabase.functions.invoke('upload-document', {
-              body: formData
-            });
+                if (error) throw error;
+                uploadedDocuments.push(data);
+                successCount++;
+              } catch (pdfError) {
+                console.warn(`PDF parsing failed for ${currentFile.name}, falling back to edge function:`, pdfError);
+                // Fall back to the original upload method
+                const formData = new FormData();
+                formData.append('file', currentFile);
+                formData.append('title', files.length === 1 ? title : `${title} - ${currentFile.name.replace(/\.[^/.]+$/, "")}`);
+                formData.append('description', description);
 
-            if (error) throw error;
-            uploadedDocuments.push(data?.document);
-            successCount++;
+                const { data, error } = await supabase.functions.invoke('upload-document', {
+                  body: formData
+                });
+
+                if (error) throw error;
+                uploadedDocuments.push(data?.document);
+                successCount++;
+              }
+            } else {
+              // For non-PDF files, use the original upload method
+              const formData = new FormData();
+              formData.append('file', currentFile);
+              formData.append('title', files.length === 1 ? title : `${title} - ${currentFile.name.replace(/\.[^/.]+$/, "")}`);
+              formData.append('description', description);
+
+              const { data, error } = await supabase.functions.invoke('upload-document', {
+                body: formData
+              });
+
+              if (error) throw error;
+              uploadedDocuments.push(data?.document);
+              successCount++;
+            }
           } catch (error) {
             console.error(`Upload error for file ${currentFile.name}:`, error);
             failCount++;
