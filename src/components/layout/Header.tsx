@@ -66,10 +66,10 @@ export const Header = () => {
             
             <nav className="flex items-center space-x-2">
               <Button 
-                variant={location.pathname === "/" ? "default" : "ghost"} 
+                variant="ghost"
                 size="sm"
                 asChild
-                className={location.pathname === "/" ? "text-white hover:text-white" : "text-white hover:text-white"}
+                className="text-white hover:text-white"
               >
                 <Link to="/">
                   <Home className="h-4 w-4 mr-2" />
