@@ -69,7 +69,7 @@ export const Header = () => {
                 variant="ghost"
                 size="sm"
                 asChild
-                className="text-white hover:text-white"
+                className="text-white hover:text-white hover:bg-primary"
               >
                 <Link to="/">
                   <Home className="h-4 w-4 mr-2" />
