@@ -26,6 +26,7 @@ import { Plus, Edit, Trash2, User, Sparkles, Brain } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Header } from "@/components/layout/Header";
 
 interface Persona {
   id: string;
@@ -313,154 +314,157 @@ const PersonasManagement = () => {
   );
 
   return (
-    <div className="space-y-24pt">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">AI Analysis Personas</h1>
-          <p className="text-muted-foreground">
-            Manage specialized AI personas for document analysis
-          </p>
-        </div>
-        <Button onClick={handleCreate}>
-          <Plus className="h-4 w-4 mr-8pt" />
-          Create New Persona
-        </Button>
-      </div>
+    <div className="min-h-screen bg-gradient-subtle">
+      <Header />
+      <main className="container mx-auto px-24pt py-32pt">
+        <div className="space-y-32pt">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground mb-8pt">AI Analysis Personas</h1>
+              <p className="text-body text-muted-foreground">
+                Manage specialized AI personas for document analysis
+              </p>
+            </div>
+            <Button onClick={handleCreate} className="gradient-btn">
+              <Plus className="h-4 w-4 mr-8pt" />
+              Create New Persona
+            </Button>
+          </div>
 
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-16pt">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="pt-24pt">
-                <div className="h-4 bg-muted rounded w-3/4 mb-8pt"></div>
-                <div className="h-3 bg-muted rounded w-1/2 mb-12pt"></div>
-                <div className="h-16 bg-muted rounded"></div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-16pt">
-          {personas?.map((persona) => (
-            <Card key={persona.id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center space-x-8pt">
-                    <span className="text-lg">{persona.avatar_emoji}</span>
-                    <span className="text-body">{persona.name}</span>
-                  </div>
-                  <div className="flex items-center space-x-4pt">
-                    {persona.is_default && (
-                      <Badge variant="secondary" className="text-xs">Default</Badge>
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-24pt">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <Card key={i} className="animate-pulse hover-lift">
+                  <CardContent className="pt-24pt">
+                    <div className="h-4 bg-muted rounded w-3/4 mb-8pt"></div>
+                    <div className="h-3 bg-muted rounded w-1/2 mb-12pt"></div>
+                    <div className="h-16 bg-muted rounded"></div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-24pt">
+              {personas?.map((persona) => (
+                <Card key={persona.id} className="hover-lift transition-all duration-400">
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <div className="flex items-center space-x-8pt">
+                        <span className="text-xl">{persona.avatar_emoji}</span>
+                        <span className="text-body font-medium">{persona.name}</span>
+                      </div>
+                      <div className="flex items-center space-x-4pt">
+                        {persona.is_default && (
+                          <Badge variant="secondary" className="text-xs">Default</Badge>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(persona)}
+                        >
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                        {!persona.is_default && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(persona)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-body text-muted-foreground mb-16pt line-clamp-2">
+                      {persona.description || "No description provided"}
+                    </p>
+                    
+                    {persona.expertise_areas && persona.expertise_areas.length > 0 && (
+                      <div className="flex flex-wrap gap-4pt mb-16pt">
+                        {persona.expertise_areas.slice(0, 3).map((area, idx) => (
+                          <Badge key={idx} variant="outline" className="text-xs">
+                            {area}
+                          </Badge>
+                        ))}
+                        {persona.expertise_areas.length > 3 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{persona.expertise_areas.length - 3}
+                          </Badge>
+                        )}
+                      </div>
                     )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(persona)}
-                    >
-                      <Edit className="h-3 w-3" />
-                    </Button>
-                    {!persona.is_default && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(persona)}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-body text-muted-foreground mb-12pt line-clamp-2">
-                  {persona.description || "No description provided"}
-                </p>
-                
-                {persona.expertise_areas && persona.expertise_areas.length > 0 && (
-                  <div className="flex flex-wrap gap-4pt mb-12pt">
-                    {persona.expertise_areas.slice(0, 3).map((area, idx) => (
-                      <Badge key={idx} variant="outline" className="text-xs">
-                        {area}
-                      </Badge>
-                    ))}
-                    {persona.expertise_areas.length > 3 && (
-                      <Badge variant="outline" className="text-xs">
-                        +{persona.expertise_areas.length - 3}
-                      </Badge>
-                    )}
-                  </div>
-                )}
 
-                <div className="text-xs text-muted-foreground">
-                  <strong>System Prompt:</strong>
-                  <p className="mt-4pt line-clamp-3">{persona.system_prompt}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                    <div className="text-body text-muted-foreground">
+                      <strong className="text-foreground">System Prompt:</strong>
+                      <p className="mt-8pt line-clamp-3 text-xs">{persona.system_prompt}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {/* Dialogs remain the same */}
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center space-x-8pt">
+                  <User className="h-5 w-5" />
+                  <span>Create New Persona</span>
+                </DialogTitle>
+              </DialogHeader>
+              <PersonaForm />
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={() => savePersona(false)}>
+                  Create Persona
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center space-x-8pt">
+                  <Edit className="h-5 w-5" />
+                  <span>Edit Persona</span>
+                </DialogTitle>
+              </DialogHeader>
+              <PersonaForm isEdit />
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={() => savePersona(true)}>
+                  Update Persona
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Persona</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete "{selectedPersona?.name}"? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={confirmDelete}>
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
-      )}
-
-      {/* Create Dialog */}
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center space-x-8pt">
-              <User className="h-5 w-5" />
-              <span>Create New Persona</span>
-            </DialogTitle>
-          </DialogHeader>
-          <PersonaForm />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={() => savePersona(false)}>
-              Create Persona
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center space-x-8pt">
-              <Edit className="h-5 w-5" />
-              <span>Edit Persona</span>
-            </DialogTitle>
-          </DialogHeader>
-          <PersonaForm isEdit />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={() => savePersona(true)}>
-              Update Persona
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Persona</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete "{selectedPersona?.name}"? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete}>
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      </main>
     </div>
   );
 };
