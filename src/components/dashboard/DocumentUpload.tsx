@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Upload, FileText, CheckCircle, AlertCircle } from "lucide-react";
+import { Upload, FileText, CheckCircle, AlertCircle, Play } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { triggerAnalysisForDocument } from "@/utils/triggerAnalysis";
 
 export const DocumentUpload = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -82,6 +83,33 @@ export const DocumentUpload = () => {
     }
   };
 
+  // Debug function to manually trigger analysis for existing documents
+  const handleManualAnalysis = async () => {
+    try {
+      // Test with the HTML document that was uploaded
+      const result = await triggerAnalysisForDocument('13b863ba-1eb6-4ac9-9a8f-0e6e86813152');
+      if (result.success) {
+        toast({
+          title: "Analysis triggered",
+          description: "Manual analysis started for test document"
+        });
+      } else {
+        toast({
+          title: "Analysis failed",
+          description: result.error?.message || "Failed to start analysis",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Manual analysis error:', error);
+      toast({
+        title: "Analysis error",
+        description: "Failed to trigger manual analysis",
+        variant: "destructive"
+      });
+    }
+  };
+
   const getStatusIcon = () => {
     switch (uploadStatus) {
       case 'uploading':
@@ -152,6 +180,16 @@ export const DocumentUpload = () => {
              uploadStatus === 'success' ? 'Upload Complete!' :
              uploadStatus === 'error' ? 'Upload Failed' : 'Upload & Analyze'}
           </span>
+        </Button>
+
+        {/* Debug button to manually trigger analysis */}
+        <Button 
+          onClick={handleManualAnalysis}
+          variant="outline"
+          className="w-full flex items-center space-x-8pt"
+        >
+          <Play className="h-4 w-4" />
+          <span>Test Analysis (Debug)</span>
         </Button>
 
         <div className="bg-muted/50 p-16pt rounded-lg">

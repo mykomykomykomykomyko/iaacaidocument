@@ -132,12 +132,14 @@ Format your response clearly with headers and bullet points for easy parsing.`;
       .from('analyses')
       .insert({
         document_id,
+        user_id: document.user_id, // Use the document's user_id (can be null for testing)
         title: `Environmental Analysis: ${documentTitle}`,
         analysis_content: analysisContent,
         key_findings: keyFindings,
         recommendations: recommendations,
         confidence_score,
         analysis_type,
+        persona: 'environmental_scientist',
         status: 'completed'
       })
       .select()
