@@ -454,15 +454,15 @@ export const DocumentUpload = () => {
           <div className="flex items-start space-x-8pt">
             <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5" />
             <div className="text-body text-muted-foreground">
-              <p className="font-medium mb-4pt">Supported Formats (Auto-detected):</p>
+              <p className="font-medium mb-4pt">{t('upload.formats')}</p>
               <ul className="list-disc list-inside space-y-4pt">
-                <li><strong>Plain Text</strong> - Paste text directly for quick analysis</li>
-                <li><strong>HTML files</strong> - Best for environmental assessments (MVP format)</li>
-                <li><strong>Excel files</strong> - XLS, XLSX spreadsheets with data analysis</li>
-                <li><strong>Text files</strong> - Plain text documents (TXT)</li>
-                <li><strong>PDF documents</strong> - Up to 500MB (basic text extraction)</li>
+                <li><strong>{t('upload.plainTextFormat').split(' - ')[0]}</strong> - {t('upload.plainTextFormat').split(' - ')[1]}</li>
+                <li><strong>{t('upload.htmlFormat').split(' - ')[0]}</strong> - {t('upload.htmlFormat').split(' - ')[1]}</li>
+                <li><strong>{t('upload.excelFormat').split(' - ')[0]}</strong> - {t('upload.excelFormat').split(' - ')[1]}</li>
+                <li><strong>{t('upload.textFormat').split(' - ')[0]}</strong> - {t('upload.textFormat').split(' - ')[1]}</li>
+                <li><strong>{t('upload.pdfFormat').split(' - ')[0]}</strong> - {t('upload.pdfFormat').split(' - ')[1]}</li>
               </ul>
-              <p className="mt-8pt text-sm">Use the toggle above to switch between file upload and plain text input. File types are automatically detected. Size limits: 100MB (HTML/Excel/TXT), 500MB (PDF).</p>
+              <p className="mt-8pt text-sm">{t('upload.formatNote')}</p>
             </div>
           </div>
         </div>
