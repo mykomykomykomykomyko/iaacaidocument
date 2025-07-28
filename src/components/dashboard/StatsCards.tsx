@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Search, Users, CheckCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface StatCardProps {
   title: string;
@@ -26,6 +27,7 @@ const StatCard = ({ title, value, icon, description }: StatCardProps) => (
 );
 
 export const StatsCards = () => {
+  const { t } = useLanguage();
   const { data: documentsCount } = useQuery({
     queryKey: ['documents-count'],
     queryFn: async () => {
@@ -71,28 +73,28 @@ export const StatsCards = () => {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <StatCard
-        title="Documents Processed"
+        title={t('stats.documentsProcessed')}
         value={documentsCount?.toString() || "0"}
         icon={<FileText className="h-4 w-4" />}
-        description="HTML, Excel, PDF & text files analyzed"
+        description={t('stats.documentsDesc')}
       />
       <StatCard
-        title="AI Analyses"
+        title={t('stats.aiAnalyses')}
         value={analysesCount?.toString() || "0"}
         icon={<Search className="h-4 w-4" />}
-        description="AI-powered environmental assessments"
+        description={t('stats.aiAnalysesDesc')}
       />
       <StatCard
-        title="File Formats"
+        title={t('stats.fileFormats')}
         value={analysisTypesCount?.toString() || "0"}
         icon={<Users className="h-4 w-4" />}
-        description="Different document types supported"
+        description={t('stats.fileFormatsDesc')}
       />
       <StatCard
-        title="Completed Analyses"
+        title={t('stats.completedAnalyses')}
         value={verifiedCount?.toString() || "0"}
         icon={<CheckCircle className="h-4 w-4" />}
-        description="Successfully processed documents"
+        description={t('stats.completedDesc')}
       />
     </div>
   );

@@ -91,6 +91,16 @@ const translations = {
     'personas.noDescription': 'No description provided',
     'personas.default': 'Default',
     
+    // Stats Cards
+    'stats.documentsProcessed': 'Documents Processed',
+    'stats.aiAnalyses': 'AI Analyses',
+    'stats.fileFormats': 'File Formats',
+    'stats.completedAnalyses': 'Completed Analyses',
+    'stats.documentsDesc': 'HTML, Excel, PDF & text files analyzed',
+    'stats.aiAnalysesDesc': 'AI-powered environmental assessments',
+    'stats.fileFormatsDesc': 'Different document types supported',
+    'stats.completedDesc': 'Successfully processed documents',
+    
     // Common
     'common.save': 'Save',
     'common.cancel': 'Cancel',
@@ -183,6 +193,16 @@ const translations = {
     'personas.systemPromptLabel': 'Invite système :',
     'personas.noDescription': 'Aucune description fournie',
     'personas.default': 'Par défaut',
+    
+    // Stats Cards
+    'stats.documentsProcessed': 'Documents traités',
+    'stats.aiAnalyses': 'Analyses IA',
+    'stats.fileFormats': 'Formats de fichiers',
+    'stats.completedAnalyses': 'Analyses terminées',
+    'stats.documentsDesc': 'Fichiers HTML, Excel, PDF et texte analysés',
+    'stats.aiAnalysesDesc': 'Évaluations environnementales par IA',
+    'stats.fileFormatsDesc': 'Différents types de documents pris en charge',
+    'stats.completedDesc': 'Documents traités avec succès',
     
     // Common
     'common.save': 'Enregistrer',
