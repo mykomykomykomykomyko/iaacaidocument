@@ -13,29 +13,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const AI_PERSONAS = {
-  'fish-habitat': {
-    name: 'Fish Habitat Specialist',
-    prompt: 'You are a fish habitat specialist analyzing environmental impact documents. Focus on aquatic ecosystems, fish populations, spawning areas, migration routes, water quality impacts on fish, and habitat restoration measures.'
-  },
-  'water-quality': {
-    name: 'Water Quality Expert', 
-    prompt: 'You are a water quality expert analyzing environmental documents. Focus on chemical parameters, pollution sources, treatment methods, monitoring requirements, and regulatory compliance for water systems.'
-  },
-  'caribou-biologist': {
-    name: 'Caribou Biologist',
-    prompt: 'You are a caribou biologist analyzing environmental impact documents. Focus on caribou migration patterns, calving grounds, predator-prey relationships, habitat disruption, and population dynamics.'
-  },
-  'indigenous-knowledge': {
-    name: 'Indigenous Knowledge Keeper',
-    prompt: 'You are an Indigenous knowledge keeper analyzing environmental documents. Focus on traditional ecological knowledge, cultural sites, traditional land use, community impacts, and indigenous rights and consultation.'
-  },
-  'general': {
-    name: 'Environmental Analyst',
-    prompt: 'You are a general environmental analyst. Provide comprehensive analysis covering all environmental aspects including ecological, social, and regulatory considerations.'
-  }
-};
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -46,6 +23,17 @@ serve(async (req) => {
 
     console.log(`Starting analysis for document ${document_id} with persona ${persona}`);
 
+    if (!anthropicApiKey) {
+      console.error('ANTHROPIC_API_KEY not configured');
+      return new Response(JSON.stringify({ 
+        error: 'ANTHROPIC_API_KEY not configured',
+        success: false 
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Get document content from database
     const { data: document, error: docError } = await supabase
       .from('documents')
@@ -54,12 +42,40 @@ serve(async (req) => {
       .single();
 
     if (docError || !document) {
-      throw new Error(`Document not found: ${docError?.message}`);
+      console.error('Document not found:', docError?.message);
+      return new Response(JSON.stringify({ 
+        error: `Document not found: ${docError?.message}`,
+        success: false 
+      }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    const selectedPersona = AI_PERSONAS[persona as keyof typeof AI_PERSONAS] || AI_PERSONAS.general;
+    console.log(`Analyzing document: ${document.title}`);
+    console.log(`Text length: ${document.extracted_text?.length || 0} characters`);
+
+    // Create analysis prompt
+    const analysisPrompt = `Please analyze this environmental document and provide a comprehensive summary:
+
+Document Title: ${document.title}
+Document Type: ${document.file_type}
+File Size: ${document.file_size ? Math.round(document.file_size / 1024) : 'unknown'} KB
+
+Content to analyze:
+${document.extracted_text || 'No text content available for analysis.'}
+
+Please provide:
+1. Executive Summary (2-3 sentences)
+2. Key Environmental Findings (3-5 main points)
+3. Potential Environmental Impacts
+4. Recommendations for next steps
+5. Compliance and regulatory considerations
+
+Focus on actionable insights and specific environmental concerns.`;
 
     // Analyze document with Claude
+    console.log('Calling Anthropic API...');
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -69,43 +85,42 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: 'claude-3-5-sonnet-20241022',
-        max_tokens: 4000,
+        max_tokens: 3000,
         messages: [
           {
             role: 'user',
-            content: `${selectedPersona.prompt}
-
-Please analyze this environmental document and provide a detailed analysis focusing on your area of expertise:
-
-Document Title: ${document.title}
-Document Type: ${document.file_type}
-Content: ${document.extracted_text || 'No extracted text available'}
-
-Please provide:
-1. Key findings relevant to your specialty
-2. Potential impacts and concerns
-3. Recommendations for mitigation
-4. Compliance considerations
-5. Areas requiring further investigation
-
-Focus on actionable insights and specific recommendations.`
+            content: analysisPrompt
           }
         ]
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`Anthropic API error: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      console.error(`Anthropic API error: ${response.status} ${response.statusText} - ${errorText}`);
+      return new Response(JSON.stringify({ 
+        error: `Anthropic API error: ${response.status} ${response.statusText}`,
+        success: false 
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const claudeData = await response.json();
     const analysis_content = claudeData.content[0].text;
 
-    // Generate confidence score based on content length and quality indicators
-    const confidence_score = Math.min(95, Math.max(65, 
-      75 + (analysis_content.length > 2000 ? 15 : 0) + 
-      (document.extracted_text?.length > 10000 ? 10 : 0)
+    console.log('Analysis completed, saving to database...');
+
+    // Generate confidence score based on content available
+    const textLength = document.extracted_text?.length || 0;
+    const confidence_score = Math.min(95, Math.max(60, 
+      70 + (textLength > 1000 ? 15 : 0) + (textLength > 5000 ? 10 : 0)
     ));
+
+    // Extract key findings and recommendations
+    const key_findings = extractKeyFindings(analysis_content);
+    const recommendations = extractRecommendations(analysis_content);
 
     // Save analysis to database
     const { data: analysis, error: analysisError } = await supabase
@@ -114,30 +129,37 @@ Focus on actionable insights and specific recommendations.`
         document_id,
         user_id: null, // Allow anonymous analyses
         persona_id: crypto.randomUUID(), // Generate a persona ID
-        title: document.title || 'Environmental Analysis',
+        title: `Analysis: ${document.title}`,
         topic: 'Environmental Assessment',
         analysis_type,
         persona,
         status: 'completed',
         analysis_content,
         confidence_score,
-        key_findings: extractKeyFindings(analysis_content),
-        recommendations: extractRecommendations(analysis_content),
+        key_findings,
+        recommendations,
         completed_at: new Date().toISOString()
       })
       .select()
       .single();
 
     if (analysisError) {
-      throw new Error(`Failed to save analysis: ${analysisError.message}`);
+      console.error('Failed to save analysis:', analysisError);
+      return new Response(JSON.stringify({ 
+        error: `Failed to save analysis: ${analysisError.message}`,
+        success: false 
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    console.log(`Analysis completed for document ${document_id}`);
+    console.log(`Analysis completed and saved with ID: ${analysis.id}`);
 
     return new Response(JSON.stringify({
       success: true,
       analysis,
-      persona: selectedPersona.name
+      message: 'Analysis completed successfully'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -158,10 +180,24 @@ function extractKeyFindings(content: string): string[] {
   const findings: string[] = [];
   const lines = content.split('\n');
   
+  let inFindingsSection = false;
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
-    if (line.match(/^\d+\.|^[\-\*]/)) {
-      const finding = line.replace(/^\d+\./, '').replace(/^[\-\*]/, '').trim();
+    
+    // Check if we're in the key findings section
+    if (line.toLowerCase().includes('key') && line.toLowerCase().includes('finding')) {
+      inFindingsSection = true;
+      continue;
+    }
+    
+    // Stop if we hit another section
+    if (inFindingsSection && line.toLowerCase().includes('impact') && line.includes(':')) {
+      break;
+    }
+    
+    // Extract numbered or bulleted items
+    if (inFindingsSection && (line.match(/^\d+\./) || line.match(/^[\-\*•]/))) {
+      const finding = line.replace(/^\d+\./, '').replace(/^[\-\*•]/, '').trim();
       if (finding.length > 20) {
         findings.push(finding);
       }
@@ -173,16 +209,27 @@ function extractKeyFindings(content: string): string[] {
 
 function extractRecommendations(content: string): string[] {
   const recommendations: string[] = [];
-  const sections = content.toLowerCase().split(/recommendations?|suggested actions?|mitigation measures?/);
+  const lines = content.split('\n');
   
-  if (sections.length > 1) {
-    const recSection = sections[1];
-    const lines = recSection.split('\n');
+  let inRecommendationsSection = false;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
     
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (trimmed.match(/^\d+\.|^[\-\*]/) && trimmed.length > 30) {
-        const rec = trimmed.replace(/^\d+\./, '').replace(/^[\-\*]/, '').trim();
+    // Check if we're in the recommendations section
+    if (line.toLowerCase().includes('recommendation')) {
+      inRecommendationsSection = true;
+      continue;
+    }
+    
+    // Stop if we hit another section
+    if (inRecommendationsSection && line.toLowerCase().includes('compliance') && line.includes(':')) {
+      break;
+    }
+    
+    // Extract numbered or bulleted items
+    if (inRecommendationsSection && (line.match(/^\d+\./) || line.match(/^[\-\*•]/))) {
+      const rec = line.replace(/^\d+\./, '').replace(/^[\-\*•]/, '').trim();
+      if (rec.length > 20) {
         recommendations.push(rec);
       }
     }
