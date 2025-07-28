@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Upload, FileText, CheckCircle, AlertCircle, Play } from "lucide-react";
+import { Upload, FileText, CheckCircle, AlertCircle, Play, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { triggerAnalysisForDocument } from "@/utils/triggerAnalysis";
+import { useQuery } from "@tanstack/react-query";
+import { AnalysisConfigDialog } from "./AnalysisConfigDialog";
 
 export const DocumentUpload = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -15,6 +16,8 @@ export const DocumentUpload = () => {
   const [description, setDescription] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
+  const [selectedDocument, setSelectedDocument] = useState<any>(null);
+  const [analysisDialogOpen, setAnalysisDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -83,35 +86,24 @@ export const DocumentUpload = () => {
     }
   };
 
-  // Debug function to manually trigger analysis for existing documents
-  const handleManualAnalysis = async () => {
-    try {
-      // Test with the HTML document (Northern Road Link Project)
-      const result = await triggerAnalysisForDocument('13b863ba-1eb6-4ac9-9a8f-0e6e86813152');
+  // Query for existing documents
+  const { data: documents, refetch: refetchDocuments } = useQuery({
+    queryKey: ['documents'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('documents')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(5);
       
-      console.log('Manual analysis result:', result);
-      
-      if (result.success) {
-        toast({
-          title: "Analysis triggered",
-          description: "Manual analysis started for HTML document. Check console for details."
-        });
-      } else {
-        console.error('Analysis failed with error:', result.error);
-        toast({
-          title: "Analysis failed",
-          description: result.error?.message || "Failed to start analysis",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      console.error('Manual analysis error:', error);
-      toast({
-        title: "Analysis error",
-        description: "Failed to trigger manual analysis",
-        variant: "destructive"
-      });
+      if (error) throw error;
+      return data;
     }
+  });
+
+  const handleAnalyzeDocument = (document: any) => {
+    setSelectedDocument(document);
+    setAnalysisDialogOpen(true);
   };
 
   const getStatusIcon = () => {
@@ -186,15 +178,33 @@ export const DocumentUpload = () => {
           </span>
         </Button>
 
-        {/* Debug button to manually trigger analysis */}
-        <Button 
-          onClick={handleManualAnalysis}
-          variant="outline"
-          className="w-full flex items-center space-x-8pt"
-        >
-          <Play className="h-4 w-4" />
-          <span>Test Analysis (Debug)</span>
-        </Button>
+        {/* Existing Documents for Analysis */}
+        {documents && documents.length > 0 && (
+          <div className="space-y-12pt">
+            <div className="flex items-center space-x-8pt">
+              <Sparkles className="h-4 w-4" />
+              <Label className="font-medium">Analyze Existing Documents</Label>
+            </div>
+            <div className="space-y-8pt max-h-48 overflow-y-auto">
+              {documents.map((doc) => (
+                <div key={doc.id} className="flex items-center justify-between p-12pt border rounded-lg">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-body truncate">{doc.title}</p>
+                    <p className="text-xs text-muted-foreground">{doc.filename}</p>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleAnalyzeDocument(doc)}
+                  >
+                    <Sparkles className="h-3 w-3 mr-4pt" />
+                    Analyze
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="bg-muted/50 p-16pt rounded-lg">
           <div className="flex items-start space-x-8pt">
@@ -211,6 +221,15 @@ export const DocumentUpload = () => {
             </div>
           </div>
         </div>
+
+        <AnalysisConfigDialog
+          document={selectedDocument}
+          open={analysisDialogOpen}
+          onOpenChange={setAnalysisDialogOpen}
+          onAnalysisStarted={() => {
+            refetchDocuments();
+          }}
+        />
       </CardContent>
     </Card>
   );

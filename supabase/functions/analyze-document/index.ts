@@ -12,8 +12,13 @@ serve(async (req) => {
   }
 
   try {
-    const { document_id, analysis_type = 'environmental' } = await req.json();
-    console.log('Analyzing document:', document_id, 'Type:', analysis_type);
+    const { 
+      document_id, 
+      analysis_type = 'environmental',
+      persona_id,
+      custom_instructions 
+    } = await req.json();
+    console.log('Analyzing document:', document_id, 'Type:', analysis_type, 'Persona:', persona_id);
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -38,7 +43,21 @@ serve(async (req) => {
       throw new Error(`Document not found: ${docError?.message}`);
     }
 
-    console.log('Document found:', document.title);
+    // Fetch persona if specified
+    let persona = null;
+    if (persona_id) {
+      console.log('Fetching persona...');
+      const { data: personaData, error: personaError } = await supabase
+        .from('personas')
+        .select('*')
+        .eq('id', persona_id)
+        .single();
+      
+      if (!personaError && personaData) {
+        persona = personaData;
+        console.log('Persona found:', persona.name);
+      }
+    }
 
     // Create analysis record
     const { data: analysis, error: analysisError } = await supabase
@@ -47,7 +66,9 @@ serve(async (req) => {
         document_id,
         title: `Analysis of ${document.title}`,
         analysis_type,
-        status: 'processing'
+        status: 'processing',
+        persona_id: persona_id || null,
+        custom_instructions: custom_instructions || null
       })
       .select()
       .single();
@@ -60,18 +81,34 @@ serve(async (req) => {
 
     // Analyze with Gemini
     console.log('Calling Gemini API...');
-    const prompt = `Analyze this environmental impact assessment document and provide key findings:
+    
+    // Build the prompt based on persona and custom instructions
+    let systemPrompt = persona?.system_prompt || 'You are an Environmental Scientist with expertise in impact assessments. Analyze documents focusing on environmental concerns, ecological impacts, mitigation measures, and regulatory compliance. Provide clear, structured analysis with actionable insights.';
+    
+    let analysisPrompt = `${systemPrompt}
 
+DOCUMENT TO ANALYZE:
 Title: ${document.title}
-Content: ${document.content || 'No content available'}
+Content: ${document.content || 'No content available'}`;
 
-Please provide:
-1. Key environmental concerns
-2. Impact assessment summary
-3. Mitigation measures
-4. Overall assessment confidence
+    if (custom_instructions) {
+      analysisPrompt += `
 
-Format as a structured analysis.`;
+ADDITIONAL INSTRUCTIONS:
+${custom_instructions}`;
+    }
+
+    analysisPrompt += `
+
+Please provide a comprehensive analysis in markdown format with the following structure:
+1. **Executive Summary**
+2. **Key Environmental Concerns**
+3. **Impact Assessment Summary**
+4. **Mitigation Measures**
+5. **Recommendations**
+6. **Confidence Assessment**
+
+Format your response using proper markdown headers and bullet points for clarity.`;
 
     const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
@@ -81,7 +118,7 @@ Format as a structured analysis.`;
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: prompt
+            text: analysisPrompt
           }]
         }]
       }),

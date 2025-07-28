@@ -1,13 +1,24 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export const triggerAnalysisForDocument = async (documentId: string) => {
+interface AnalysisOptions {
+  persona_id?: string;
+  custom_instructions?: string;
+  analysis_type?: string;
+}
+
+export const triggerAnalysisForDocument = async (
+  documentId: string, 
+  options: AnalysisOptions = {}
+) => {
   try {
-    console.log(`Triggering analysis for document: ${documentId}`);
+    console.log(`Triggering analysis for document: ${documentId}`, options);
     
     const { data, error } = await supabase.functions.invoke('analyze-document', {
       body: { 
         document_id: documentId,
-        analysis_type: 'environmental'
+        analysis_type: options.analysis_type || 'environmental',
+        persona_id: options.persona_id,
+        custom_instructions: options.custom_instructions
       },
     });
 

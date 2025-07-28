@@ -20,10 +20,12 @@ export type Database = {
           analysis_type: string
           confidence_score: number | null
           created_at: string
+          custom_instructions: string | null
           document_id: string
           id: string
           key_findings: string[] | null
           persona: string
+          persona_id: string | null
           recommendations: string[] | null
           status: string
           title: string
@@ -35,10 +37,12 @@ export type Database = {
           analysis_type?: string
           confidence_score?: number | null
           created_at?: string
+          custom_instructions?: string | null
           document_id: string
           id?: string
           key_findings?: string[] | null
           persona?: string
+          persona_id?: string | null
           recommendations?: string[] | null
           status?: string
           title: string
@@ -50,10 +54,12 @@ export type Database = {
           analysis_type?: string
           confidence_score?: number | null
           created_at?: string
+          custom_instructions?: string | null
           document_id?: string
           id?: string
           key_findings?: string[] | null
           persona?: string
+          persona_id?: string | null
           recommendations?: string[] | null
           status?: string
           title?: string
@@ -66,6 +72,13 @@ export type Database = {
             columns: ["document_id"]
             isOneToOne: false
             referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analyses_persona_id_fkey"
+            columns: ["persona_id"]
+            isOneToOne: false
+            referencedRelation: "personas"
             referencedColumns: ["id"]
           },
         ]
@@ -114,6 +127,69 @@ export type Database = {
           title?: string
           updated_at?: string
           upload_status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      notes: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      personas: {
+        Row: {
+          avatar_emoji: string | null
+          created_at: string
+          description: string | null
+          expertise_areas: string[] | null
+          id: string
+          is_default: boolean | null
+          name: string
+          system_prompt: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          avatar_emoji?: string | null
+          created_at?: string
+          description?: string | null
+          expertise_areas?: string[] | null
+          id?: string
+          is_default?: boolean | null
+          name: string
+          system_prompt: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          avatar_emoji?: string | null
+          created_at?: string
+          description?: string | null
+          expertise_areas?: string[] | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          system_prompt?: string
+          updated_at?: string
           user_id?: string | null
         }
         Relationships: []
