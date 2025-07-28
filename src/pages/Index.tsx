@@ -1,12 +1,13 @@
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FileText, MessageSquare, BarChart3, Upload, Shield, Zap } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const Index = () => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-background">
@@ -22,8 +23,8 @@ const Index = () => {
               Advanced AI-powered document analysis and research tool for the Government of Canada
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-6">
-              <Button asChild size="lg" className="canada-btn-primary text-base lg:text-lg px-8 py-4">
-                <Link to="/dashboard">Get Started</Link>
+              <Button onClick={() => navigate('/dashboard')} size="lg" className="canada-btn-primary text-base lg:text-lg px-8 py-4">
+                Get Started
               </Button>
               <Button variant="outline" size="lg" className="text-base lg:text-lg px-8 py-4">
                 Learn More
