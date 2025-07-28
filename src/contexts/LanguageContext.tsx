@@ -91,6 +91,12 @@ const translations = {
     'personas.noDescription': 'No description provided',
     'personas.default': 'Default',
     
+    // Tabs
+    'tabs.overview': 'Overview',
+    'tabs.upload': 'Upload',
+    'tabs.aiAnalyst': 'AI Analyst',
+    'tabs.analyses': 'Analyses',
+    
     // Stats Cards
     'stats.documentsProcessed': 'Documents Processed',
     'stats.aiAnalyses': 'AI Analyses',
@@ -193,6 +199,12 @@ const translations = {
     'personas.systemPromptLabel': 'Invite système :',
     'personas.noDescription': 'Aucune description fournie',
     'personas.default': 'Par défaut',
+    
+    // Tabs
+    'tabs.overview': 'Aperçu',
+    'tabs.upload': 'Télécharger',
+    'tabs.aiAnalyst': 'Analyste IA',
+    'tabs.analyses': 'Analyses',
     
     // Stats Cards
     'stats.documentsProcessed': 'Documents traités',
