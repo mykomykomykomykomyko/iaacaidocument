@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { User, Home, Flag } from "lucide-react";
+import { User, Home } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
 
 export const Header = () => {
@@ -11,10 +11,12 @@ export const Header = () => {
           {/* Government of Canada Brand */}
           <div className="flex items-center space-x-6">
             <div className="gc-logo">
-              {/* Canada Flag Symbol */}
-              <div className="w-8 h-6 bg-primary rounded-sm flex items-center justify-center relative">
-                <Flag className="h-4 w-4 text-primary-foreground" />
-              </div>
+              {/* Official Canada Flag */}
+              <img 
+                src="/lovable-uploads/e5155a7e-e6bf-455b-9018-36b7c397bb4a.png" 
+                alt="Flag of Canada"
+                className="w-10 h-6 object-cover border border-border"
+              />
               <div className="ml-3">
                 <div className="text-lg font-semibold text-foreground">
                   Government of Canada
