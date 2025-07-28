@@ -16,13 +16,17 @@ export type Database = {
     Tables: {
       analyses: {
         Row: {
+          analysis_content: string
+          analysis_type: string | null
           completed_at: string | null
           confidence_score: number | null
           created_at: string
           document_id: string
           id: string
           key_findings: Json | null
+          persona: string | null
           persona_id: string
+          recommendations: string[] | null
           source_count: number | null
           source_references: Json | null
           status: string | null
@@ -32,13 +36,17 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          analysis_content: string
+          analysis_type?: string | null
           completed_at?: string | null
           confidence_score?: number | null
           created_at?: string
           document_id: string
           id?: string
           key_findings?: Json | null
+          persona?: string | null
           persona_id: string
+          recommendations?: string[] | null
           source_count?: number | null
           source_references?: Json | null
           status?: string | null
@@ -48,13 +56,17 @@ export type Database = {
           user_id: string
         }
         Update: {
+          analysis_content?: string
+          analysis_type?: string | null
           completed_at?: string | null
           confidence_score?: number | null
           created_at?: string
           document_id?: string
           id?: string
           key_findings?: Json | null
+          persona?: string | null
           persona_id?: string
+          recommendations?: string[] | null
           source_count?: number | null
           source_references?: Json | null
           status?: string | null
@@ -82,11 +94,15 @@ export type Database = {
       }
       documents: {
         Row: {
+          description: string | null
+          extracted_text: string | null
           file_name: string
           file_size: number | null
           file_type: string | null
           id: string
+          metadata: Json | null
           processed_at: string | null
+          processing_status: string | null
           source_registry: string | null
           status: string | null
           storage_path: string | null
@@ -95,11 +111,15 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          description?: string | null
+          extracted_text?: string | null
           file_name: string
           file_size?: number | null
           file_type?: string | null
           id?: string
+          metadata?: Json | null
           processed_at?: string | null
+          processing_status?: string | null
           source_registry?: string | null
           status?: string | null
           storage_path?: string | null
@@ -108,11 +128,15 @@ export type Database = {
           user_id: string
         }
         Update: {
+          description?: string | null
+          extracted_text?: string | null
           file_name?: string
           file_size?: number | null
           file_type?: string | null
           id?: string
+          metadata?: Json | null
           processed_at?: string | null
+          processing_status?: string | null
           source_registry?: string | null
           status?: string | null
           storage_path?: string | null
@@ -181,6 +205,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      search_results: {
+        Row: {
+          created_at: string
+          document_id: string
+          id: string
+          matched_content: string | null
+          persona: string
+          query: string
+          relevance_score: number
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          document_id: string
+          id?: string
+          matched_content?: string | null
+          persona?: string
+          query: string
+          relevance_score?: number
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          document_id?: string
+          id?: string
+          matched_content?: string | null
+          persona?: string
+          query?: string
+          relevance_score?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "search_results_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
