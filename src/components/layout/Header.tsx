@@ -69,7 +69,7 @@ export const Header = () => {
                 variant={location.pathname === "/" ? "default" : "ghost"} 
                 size="sm"
                 asChild
-                className="text-white"
+                className={location.pathname === "/" ? "text-white hover:text-white" : ""}
               >
                 <Link to="/">
                   <Home className="h-4 w-4 mr-2" />
@@ -81,7 +81,7 @@ export const Header = () => {
                 onClick={toggleLanguage}
                 variant="ghost" 
                 size="sm"
-                className="ml-2 text-white"
+                className="ml-2"
               >
                 <Globe className="h-4 w-4 mr-2" />
                 {language === 'en' ? 'FR' : 'EN'}
@@ -91,7 +91,6 @@ export const Header = () => {
                 variant={location.pathname === "/personas" ? "default" : "ghost"} 
                 size="sm"
                 asChild
-                className="text-white"
               >
                 <Link to="/personas">
                   <User className="h-4 w-4 mr-2" />
