@@ -61,9 +61,12 @@ export const rasterizePdfPage = async (pdfArrayBuffer: ArrayBuffer, pageIndex: n
       throw new Error('pdfjsLib is not available globally');
     }
 
+    // Create a copy of the ArrayBuffer to avoid detachment issues
+    const pdfData = new Uint8Array(pdfArrayBuffer).buffer;
+
     // Load the PDF document with JPX fallback
     const loadingTask = pdfjsLib.getDocument({
-      data: pdfArrayBuffer,
+      data: pdfData,
       disableJpx: pdfjsLib.disableJpx || typeof pdfjsLib.JpxImage === 'undefined' // Disable JPX if configured or JpxImage unavailable
     });
     const pdf = await loadingTask.promise;
@@ -122,8 +125,11 @@ export const extractPDFText = async (arrayBuffer: ArrayBuffer) => {
     throw new Error('pdfjsLib is not available globally');
   }
 
+  // Create a copy of the ArrayBuffer to avoid detachment issues
+  const pdfData = new Uint8Array(arrayBuffer).buffer;
+
   const loadingTask = pdfjsLib.getDocument({
-    data: arrayBuffer,
+    data: pdfData,
     disableJpx: pdfjsLib.disableJpx || typeof pdfjsLib.JpxImage === 'undefined'
   });
   const pdf = await loadingTask.promise;
@@ -153,8 +159,11 @@ export const rasterizePDF = async (arrayBuffer: ArrayBuffer) => {
     throw new Error('pdfjsLib is not available globally');
   }
 
+  // Create a copy of the ArrayBuffer to avoid detachment issues
+  const pdfData = new Uint8Array(arrayBuffer).buffer;
+
   const loadingTask = pdfjsLib.getDocument({
-    data: arrayBuffer,
+    data: pdfData,
     disableJpx: pdfjsLib.disableJpx || typeof pdfjsLib.JpxImage === 'undefined'
   });
   const pdf = await loadingTask.promise;

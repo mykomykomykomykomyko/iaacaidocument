@@ -24,6 +24,7 @@ interface Document {
   mime_type: string;
   file_size: number;
   created_at: string;
+  storage_path?: string;
 }
 
 interface Analysis {

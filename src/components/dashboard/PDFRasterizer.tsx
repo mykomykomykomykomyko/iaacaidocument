@@ -62,14 +62,18 @@ export const PDFRasterizer = ({ pdfArrayBuffer, documentTitle, totalPages }: PDF
         setIsInitializing(true);
         const pdfjsLib = window.pdfjsLib;
         
+        // Create a copy of the ArrayBuffer to avoid detachment issues
+        const pdfData = new Uint8Array(pdfArrayBuffer).buffer;
+        
         const loadingTask = pdfjsLib.getDocument({
-          data: pdfArrayBuffer,
+          data: pdfData,
           disableJpx: pdfjsLib.disableJpx || typeof pdfjsLib.JpxImage === 'undefined'
         });
         
         const pdf = await loadingTask.promise;
         const numPages = pdf.numPages;
         
+        console.log(`PDF loaded successfully with ${numPages} pages`);
         setDetectedTotalPages(numPages);
         
         // Initialize pages array with placeholders
@@ -112,7 +116,9 @@ export const PDFRasterizer = ({ pdfArrayBuffer, documentTitle, totalPages }: PDF
     ));
 
     try {
-      const dataUrl = await rasterizePdfPage(pdfArrayBuffer, pageNumber - 1);
+      // Create a copy of the ArrayBuffer to avoid detachment issues
+      const pdfData = new Uint8Array(pdfArrayBuffer).buffer;
+      const dataUrl = await rasterizePdfPage(pdfData, pageNumber - 1);
       
       setPages(prev => prev.map(page => 
         page.pageNumber === pageNumber 

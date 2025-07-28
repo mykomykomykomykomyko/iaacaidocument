@@ -114,14 +114,28 @@ export const DocumentUpload = () => {
         for (let i = 0; i < files.length; i++) {
           const currentFile = files[i];
           try {
-            // For PDF files, extract text using the new PDF parser
+            // For PDF files, extract text using the new PDF parser AND store the file
             if (currentFile.type === 'application/pdf') {
               const arrayBuffer = await currentFile.arrayBuffer();
               try {
                 const { pagesText } = await extractPDFText(arrayBuffer);
                 const extractedText = pagesText.join('\n\n');
                 
-                // Create document directly with extracted text
+                // Upload PDF file to Supabase storage
+                const fileName = `${Date.now()}-${currentFile.name}`;
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                  .from('pdfs')
+                  .upload(fileName, currentFile, {
+                    contentType: currentFile.type,
+                    upsert: false
+                  });
+
+                if (uploadError) {
+                  console.error('Storage upload error:', uploadError);
+                  throw uploadError;
+                }
+                
+                // Create document with both extracted text and storage path
                 const { data, error } = await supabase
                   .from('documents')
                   .insert({
@@ -130,7 +144,7 @@ export const DocumentUpload = () => {
                     filename: currentFile.name,
                     original_filename: currentFile.name,
                     mime_type: currentFile.type,
-                    storage_path: `pdf-${Date.now()}`,
+                    storage_path: uploadData.path,
                     content: extractedText,
                     file_size: currentFile.size,
                     upload_status: 'uploaded'

@@ -14,6 +14,7 @@ import { FileText, Eye, AlertCircle, FileImage, Download } from "lucide-react";
 import { PDFRasterizer } from "./PDFRasterizer";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Document {
   id: string;
@@ -24,6 +25,7 @@ interface Document {
   mime_type: string;
   file_size: number;
   created_at: string;
+  storage_path?: string;
 }
 
 interface PDFViewerDialogProps {
@@ -37,34 +39,43 @@ export const PDFViewerDialog = ({ document, open, onOpenChange }: PDFViewerDialo
   const [loadingPDF, setLoadingPDF] = useState(false);
   const { toast } = useToast();
 
-  // Mock PDF data - In real implementation, you would fetch the actual PDF file
+  // Load PDF data from Supabase storage
   useEffect(() => {
     const loadPDFData = async () => {
-      if (!document || !document.mime_type.includes('pdf') || !open) {
+      if (!document || !document.mime_type.includes('pdf') || !open || !document.storage_path) {
         setPdfArrayBuffer(null);
         return;
       }
 
       setLoadingPDF(true);
       try {
-        // Create a mock PDF for demonstration
-        // In real implementation, you would fetch from storage or use the file blob
-        const mockPdfResponse = await fetch('/placeholder.pdf').catch(() => null);
+        console.log('Loading PDF from storage:', document.storage_path);
         
-        if (mockPdfResponse?.ok) {
-          const arrayBuffer = await mockPdfResponse.arrayBuffer();
-          setPdfArrayBuffer(arrayBuffer);
-        } else {
-          // Generate a simple mock PDF for demo purposes
-          console.log('Using mock PDF data for demonstration');
-          // You would replace this with actual PDF file fetching
-          setPdfArrayBuffer(null);
+        // Download the PDF file from Supabase storage
+        const { data, error } = await supabase.storage
+          .from('pdfs')
+          .download(document.storage_path);
+
+        if (error) {
+          console.error('Storage download error:', error);
+          throw error;
         }
+
+        if (!data) {
+          throw new Error('No PDF data received from storage');
+        }
+
+        // Convert blob to ArrayBuffer
+        const arrayBuffer = await data.arrayBuffer();
+        setPdfArrayBuffer(arrayBuffer);
+        
+        console.log('PDF loaded successfully, size:', arrayBuffer.byteLength);
+        
       } catch (error) {
         console.error('Error loading PDF data:', error);
         toast({
           title: "Error",
-          description: "Could not load PDF file for rasterization",
+          description: `Could not load PDF file: ${error.message}`,
           variant: "destructive"
         });
       } finally {
