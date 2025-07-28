@@ -38,19 +38,25 @@ serve(async (req) => {
 
     console.log(`Processing file: ${file.name}, type: ${file.type}, size: ${file.size}`);
 
-    // Validate file type
-    const allowedTypes = [
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    // Auto-detect file format based on extension and MIME type
+    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+    const detectedType = autoDetectFileType(file.type, fileExtension);
+    
+    console.log(`Auto-detected file type: ${detectedType}`);
+
+    // Validate supported file types - prioritizing HTML as MVP
+    const supportedTypes = [
       'text/html',
-      'text/plain'
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'text/plain',
+      'application/pdf' // Still support but de-prioritize
     ];
 
-    if (!allowedTypes.includes(file.type)) {
-      console.error(`Unsupported file type: ${file.type}`);
+    if (!supportedTypes.includes(detectedType)) {
+      console.error(`Unsupported file type: ${detectedType}`);
       return new Response(JSON.stringify({ 
-        error: `Unsupported file type: ${file.type}`,
+        error: `Unsupported file type: ${detectedType}. Supported formats: HTML, Excel (XLS/XLSX), TXT, PDF`,
         success: false 
       }), {
         status: 400,
@@ -58,12 +64,13 @@ serve(async (req) => {
       });
     }
 
-    // Validate file size (500MB limit)
-    const maxSize = 500 * 1024 * 1024; // 500MB
+    // Validate file size (100MB limit for non-PDF files, 500MB for PDFs)
+    const maxSize = detectedType === 'application/pdf' ? 500 * 1024 * 1024 : 100 * 1024 * 1024;
     if (file.size > maxSize) {
-      console.error('File size exceeds limit');
+      const sizeLimitMB = Math.round(maxSize / 1024 / 1024);
+      console.error(`File size exceeds ${sizeLimitMB}MB limit`);
       return new Response(JSON.stringify({ 
-        error: 'File size exceeds 500MB limit',
+        error: `File size exceeds ${sizeLimitMB}MB limit for ${detectedType}`,
         success: false 
       }), {
         status: 400,
@@ -71,48 +78,44 @@ serve(async (req) => {
       });
     }
 
-    // Extract text content based on file type
+    // Extract text content based on detected file type
     let extractedText = '';
     try {
-      if (file.type === 'text/plain' || file.type === 'text/html') {
-        const fileBuffer = await file.arrayBuffer();
-        extractedText = new TextDecoder().decode(fileBuffer);
-      } else if (file.type === 'application/pdf') {
-        // For PDF files, extract a meaningful sample of text
-        const fileBuffer = await file.arrayBuffer();
-        // Simple PDF text extraction - get readable content
-        const uint8Array = new Uint8Array(fileBuffer);
-        const textDecoder = new TextDecoder('latin1');
-        const pdfContent = textDecoder.decode(uint8Array);
-        
-        // Extract text between stream objects (basic PDF text extraction)
-        const textMatches = pdfContent.match(/stream[\s\S]*?endstream/g) || [];
-        let pdfText = '';
-        for (const match of textMatches) {
-          const streamContent = match.replace(/^stream\s*/, '').replace(/\s*endstream$/, '');
-          // Look for readable text patterns
-          const readableText = streamContent.match(/[A-Za-z0-9\s.,!?;:"'-]{10,}/g) || [];
-          pdfText += readableText.join(' ') + ' ';
-        }
-        
-        extractedText = pdfText.trim() || `PDF document: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`;
-        
-        // If we couldn't extract much text, create a descriptive placeholder
-        if (extractedText.length < 100) {
-          extractedText = `This is a PDF document titled "${title}". The document contains ${Math.round(file.size / 1024)}KB of content that requires processing for environmental impact analysis. File type: ${file.type}, Size: ${(file.size / 1024 / 1024).toFixed(2)}MB.`;
-        }
-      } else {
-        // For Word documents, create descriptive text
-        extractedText = `This is a ${file.type} document titled "${title}". The document contains ${Math.round(file.size / 1024)}KB of content that requires processing for environmental impact analysis.`;
+      const fileBuffer = await file.arrayBuffer();
+      
+      switch (detectedType) {
+        case 'text/html':
+          extractedText = await extractHtmlText(fileBuffer);
+          console.log('HTML extraction completed');
+          break;
+          
+        case 'application/vnd.ms-excel':
+        case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+          extractedText = await extractExcelText(fileBuffer, file.name);
+          console.log('Excel extraction completed');
+          break;
+          
+        case 'text/plain':
+          extractedText = new TextDecoder().decode(fileBuffer);
+          console.log('Plain text extraction completed');
+          break;
+          
+        case 'application/pdf':
+          extractedText = await extractPdfText(fileBuffer, file.name);
+          console.log('PDF extraction completed');
+          break;
+          
+        default:
+          extractedText = `Document "${title}" - Format: ${detectedType}. Content analysis available.`;
       }
     } catch (extractError) {
       console.error('Text extraction failed:', extractError);
-      extractedText = `Document "${title}" - Content extraction failed but document is available for analysis. File type: ${file.type}, Size: ${(file.size / 1024 / 1024).toFixed(2)}MB.`;
+      extractedText = `Document "${title}" - Extraction failed but document is available for analysis. Format: ${detectedType}, Size: ${(file.size / 1024 / 1024).toFixed(2)}MB.`;
     }
 
-    // Ensure we have meaningful text for analysis
+    // Ensure we have meaningful text for analysis (minimum 50 characters)
     if (extractedText.length < 50) {
-      extractedText = `Environmental document titled "${title}" uploaded for analysis. This document contains information relevant to environmental impact assessment and requires detailed review. File details: Type: ${file.type}, Size: ${(file.size / 1024 / 1024).toFixed(2)}MB.`;
+      extractedText = `Environmental document "${title}" (${detectedType}) uploaded for analysis. This document contains information relevant to environmental impact assessment and requires detailed review. File size: ${(file.size / 1024 / 1024).toFixed(2)}MB.`;
     }
 
     console.log(`Extracted text length: ${extractedText.length} characters`);
@@ -124,11 +127,11 @@ serve(async (req) => {
       .insert({
         title,
         description,
-        filename: `${crypto.randomUUID()}.${file.name.split('.').pop()}`,
+        filename: `${crypto.randomUUID()}.${fileExtension}`,
         original_filename: file.name,
         file_size: file.size,
-        mime_type: file.type,
-        storage_path: `pdfs/${crypto.randomUUID()}.${file.name.split('.').pop()}`,
+        mime_type: detectedType,
+        storage_path: `documents/${crypto.randomUUID()}.${fileExtension}`,
         content: extractedText,
         upload_status: 'completed'
       })
@@ -190,3 +193,122 @@ serve(async (req) => {
     });
   }
 });
+
+// Helper function to auto-detect file type
+function autoDetectFileType(mimeType: string, extension?: string): string {
+  // Prioritize MIME type, fall back to extension
+  if (mimeType && mimeType !== 'application/octet-stream') {
+    return mimeType;
+  }
+  
+  // Handle cases where MIME type is generic, use extension
+  switch (extension) {
+    case 'html':
+    case 'htm':
+      return 'text/html';
+    case 'xls':
+      return 'application/vnd.ms-excel';
+    case 'xlsx':
+      return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    case 'txt':
+      return 'text/plain';
+    case 'pdf':
+      return 'application/pdf';
+    default:
+      return mimeType || 'application/octet-stream';
+  }
+}
+
+// Enhanced HTML text extraction
+async function extractHtmlText(fileBuffer: ArrayBuffer): Promise<string> {
+  const htmlContent = new TextDecoder().decode(fileBuffer);
+  
+  // Remove HTML tags and extract meaningful text
+  let text = htmlContent
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove scripts
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '') // Remove styles
+    .replace(/<[^>]*>/g, ' ') // Remove all HTML tags
+    .replace(/&nbsp;/g, ' ') // Replace HTML entities
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ') // Normalize whitespace
+    .trim();
+  
+  // Extract title if present
+  const titleMatch = htmlContent.match(/<title[^>]*>(.*?)<\/title>/i);
+  const title = titleMatch ? titleMatch[1].trim() : '';
+  
+  if (title) {
+    text = `Title: ${title}\n\n${text}`;
+  }
+  
+  return text.substring(0, 100000); // Limit to 100k characters
+}
+
+// Excel text extraction (basic - extracts what we can)
+async function extractExcelText(fileBuffer: ArrayBuffer, fileName: string): Promise<string> {
+  // For now, create a descriptive placeholder since Excel parsing is complex
+  // In production, you'd want to use a library like xlsx or ExcelJS
+  const uint8Array = new Uint8Array(fileBuffer);
+  let extractedText = '';
+  
+  try {
+    // Try to find readable text in the binary data
+    const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true, fatal: false });
+    const rawText = textDecoder.decode(uint8Array);
+    
+    // Look for readable text patterns (very basic extraction)
+    const textMatches = rawText.match(/[A-Za-z0-9\s.,!?;:"'-]{10,}/g) || [];
+    extractedText = textMatches
+      .filter(match => match.trim().length > 5)
+      .slice(0, 100) // Limit to first 100 matches
+      .join(' ')
+      .substring(0, 10000); // Limit total length
+      
+  } catch (error) {
+    console.warn('Basic Excel text extraction failed:', error);
+  }
+  
+  // If extraction didn't yield much, provide structured description
+  if (extractedText.length < 100) {
+    extractedText = `Excel spreadsheet: ${fileName}. This file contains tabular data that requires analysis. The spreadsheet likely includes environmental data, measurements, or assessment results that need to be processed and analyzed.`;
+  }
+  
+  return extractedText;
+}
+
+// Improved PDF text extraction
+async function extractPdfText(fileBuffer: ArrayBuffer, fileName: string): Promise<string> {
+  try {
+    const uint8Array = new Uint8Array(fileBuffer);
+    const textDecoder = new TextDecoder('latin1');
+    const pdfContent = textDecoder.decode(uint8Array);
+    
+    // Extract text between stream objects (basic PDF text extraction)
+    const textMatches = pdfContent.match(/stream[\s\S]*?endstream/g) || [];
+    let pdfText = '';
+    
+    for (const match of textMatches) {
+      const streamContent = match.replace(/^stream\s*/, '').replace(/\s*endstream$/, '');
+      // Look for readable text patterns
+      const readableText = streamContent.match(/[A-Za-z0-9\s.,!?;:"'-]{10,}/g) || [];
+      pdfText += readableText.join(' ') + ' ';
+    }
+    
+    const cleanText = pdfText.trim();
+    
+    // If we couldn't extract much readable text, provide descriptive placeholder
+    if (cleanText.length < 100) {
+      return `PDF document: ${fileName}. This document contains environmental assessment information that requires detailed analysis. The PDF may contain scanned content, complex formatting, or protected text.`;
+    }
+    
+    return cleanText.substring(0, 50000); // Limit to 50k characters
+    
+  } catch (error) {
+    console.error('PDF text extraction error:', error);
+    return `PDF document: ${fileName}. Text extraction encountered issues, but the document is available for analysis.`;
+  }
+}

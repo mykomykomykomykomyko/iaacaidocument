@@ -71,28 +71,28 @@ export const StatsCards = () => {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <StatCard
-        title="Documents Indexed"
+        title="Documents Processed"
         value={documentsCount?.toString() || "0"}
         icon={<FileText className="h-4 w-4" />}
-        description="Impact assessments processed"
+        description="HTML, Excel, PDF & text files analyzed"
       />
       <StatCard
-        title="Analyses Completed"
+        title="AI Analyses"
         value={analysesCount?.toString() || "0"}
         icon={<Search className="h-4 w-4" />}
-        description="Topic-based extractions"
+        description="AI-powered environmental assessments"
       />
       <StatCard
-        title="Analysis Types"
+        title="File Formats"
         value={analysisTypesCount?.toString() || "0"}
         icon={<Users className="h-4 w-4" />}
-        description="Different analysis methods"
+        description="Different document types supported"
       />
       <StatCard
-        title="Verified Reports"
+        title="Completed Analyses"
         value={verifiedCount?.toString() || "0"}
         icon={<CheckCircle className="h-4 w-4" />}
-        description="Human-validated analyses"
+        description="Successfully processed documents"
       />
     </div>
   );

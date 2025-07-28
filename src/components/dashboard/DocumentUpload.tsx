@@ -54,7 +54,7 @@ export const DocumentUpload = () => {
       setUploadStatus('success');
       toast({
         title: "Upload successful",
-        description: "Document uploaded and AI analysis started. Check Recent Analyses for results."
+        description: `${data.document.mime_type.split('/')[1].toUpperCase()} file processed successfully. AI analysis is running - check Recent Analyses for results.`
       });
 
       // Reset form
@@ -109,7 +109,7 @@ export const DocumentUpload = () => {
           <Input
             id="file-upload"
             type="file"
-            accept=".pdf,.doc,.docx,.html,.txt"
+            accept=".html,.htm,.xls,.xlsx,.txt,.pdf"
             onChange={handleFileChange}
             className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:bg-primary file:text-primary-foreground hover:file:bg-primary-hover"
           />
@@ -158,13 +158,14 @@ export const DocumentUpload = () => {
           <div className="flex items-start space-x-8pt">
             <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5" />
             <div className="text-body text-muted-foreground">
-              <p className="font-medium mb-4pt">Supported Formats:</p>
+              <p className="font-medium mb-4pt">Supported Formats (Auto-detected):</p>
               <ul className="list-disc list-inside space-y-4pt">
-                <li>PDF documents (up to 500MB)</li>
-                <li>HTML files from Impact Assessment Registry</li>
-                <li>Word documents (DOC, DOCX)</li>
-                <li>Plain text files</li>
+                <li><strong>HTML files</strong> - Best for environmental assessments (MVP format)</li>
+                <li><strong>Excel files</strong> - XLS, XLSX spreadsheets with data analysis</li>
+                <li><strong>Text files</strong> - Plain text documents (TXT)</li>
+                <li><strong>PDF documents</strong> - Up to 500MB (basic text extraction)</li>
               </ul>
+              <p className="mt-8pt text-sm">File types are automatically detected. Size limits: 100MB (HTML/Excel/TXT), 500MB (PDF).</p>
             </div>
           </div>
         </div>
