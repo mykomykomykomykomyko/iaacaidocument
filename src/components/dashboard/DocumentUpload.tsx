@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Upload, FileText, CheckCircle, AlertCircle, Play, Sparkles, Eye, Trash2 } from "lucide-react";
+import { Upload, FileText, CheckCircle, AlertCircle, Play, Sparkles, Eye, Trash2, Type } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -20,8 +20,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Switch } from "@/components/ui/switch";
 
 export const DocumentUpload = () => {
+  const [isPlainText, setIsPlainText] = useState(false);
+  const [plainTextContent, setPlainTextContent] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -47,29 +50,62 @@ export const DocumentUpload = () => {
   };
 
   const handleUpload = async () => {
-    if (!file) {
-      toast({
-        title: "No file selected",
-        description: "Please select a file to upload",
-        variant: "destructive"
-      });
-      return;
+    if (isPlainText) {
+      if (!plainTextContent.trim()) {
+        toast({
+          title: "No content provided",
+          description: "Please enter some text content",
+          variant: "destructive"
+        });
+        return;
+      }
+    } else {
+      if (!file) {
+        toast({
+          title: "No file selected", 
+          description: "Please select a file to upload",
+          variant: "destructive"
+        });
+        return;
+      }
     }
 
     setIsUploading(true);
     setUploadStatus('uploading');
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('title', title);
-      formData.append('description', description);
+      if (isPlainText) {
+        // Handle plain text upload by creating document directly
+        const { data, error } = await supabase
+          .from('documents')
+          .insert({
+            title: title || 'Plain Text Document',
+            description: description,
+            filename: `${title || 'plain-text'}.txt`,
+            original_filename: `${title || 'plain-text'}.txt`,
+            mime_type: 'text/plain',
+            storage_path: 'plain-text',
+            content: plainTextContent,
+            file_size: new Blob([plainTextContent]).size,
+            upload_status: 'uploaded'
+          })
+          .select()
+          .single();
 
-      const { data, error } = await supabase.functions.invoke('upload-document', {
-        body: formData
-      });
+        if (error) throw error;
+      } else {
+        // Handle file upload
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('title', title);
+        formData.append('description', description);
 
-      if (error) throw error;
+        const { data, error } = await supabase.functions.invoke('upload-document', {
+          body: formData
+        });
+
+        if (error) throw error;
+      }
 
       setUploadStatus('success');
       toast({
@@ -81,6 +117,7 @@ export const DocumentUpload = () => {
       setFile(null);
       setTitle("");
       setDescription("");
+      setPlainTextContent("");
       
       // Reset file input
       const fileInput = document.getElementById('file-upload') as HTMLInputElement;
@@ -189,21 +226,65 @@ export const DocumentUpload = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-16pt">
-        <div className="space-y-8pt">
-          <Label htmlFor="file-upload">Select Document</Label>
-          <Input
-            id="file-upload"
-            type="file"
-            accept=".html,.htm,.xls,.xlsx,.txt,.pdf"
-            onChange={handleFileChange}
-            className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:bg-primary file:text-primary-foreground hover:file:bg-primary-hover"
-          />
-          {file && (
-            <p className="text-body text-muted-foreground">
-              Selected: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
-            </p>
-          )}
+        {/* Toggle between File Upload and Plain Text */}
+        <div className="flex items-center justify-between p-16pt border rounded-lg">
+          <div className="flex items-center space-x-8pt">
+            <Upload className="h-4 w-4" />
+            <span className="font-medium">File Upload</span>
+          </div>
+          <div className="flex items-center space-x-8pt">
+            <Label htmlFor="upload-mode" className="text-body">
+              {isPlainText ? 'Plain Text' : 'File Upload'}
+            </Label>
+            <Switch
+              id="upload-mode"
+              checked={isPlainText}
+              onCheckedChange={setIsPlainText}
+            />
+            <Type className="h-4 w-4" />
+          </div>
         </div>
+
+        {isPlainText ? (
+          // Plain Text Mode
+          <>
+            <div className="space-y-8pt">
+              <Label htmlFor="plain-text-content">Text Content</Label>
+              <Textarea
+                id="plain-text-content"
+                value={plainTextContent}
+                onChange={(e) => setPlainTextContent(e.target.value)}
+                placeholder="Paste your text content here..."
+                rows={8}
+                className="min-h-[200px]"
+              />
+              {plainTextContent && (
+                <p className="text-body text-muted-foreground">
+                  Characters: {plainTextContent.length} | Size: {(new Blob([plainTextContent]).size / 1024).toFixed(2)} KB
+                </p>
+              )}
+            </div>
+          </>
+        ) : (
+          // File Upload Mode
+          <>
+            <div className="space-y-8pt">
+              <Label htmlFor="file-upload">Select Document</Label>
+              <Input
+                id="file-upload"
+                type="file"
+                accept=".html,.htm,.xls,.xlsx,.txt,.pdf"
+                onChange={handleFileChange}
+                className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:bg-primary file:text-primary-foreground hover:file:bg-primary-hover"
+              />
+              {file && (
+                <p className="text-body text-muted-foreground">
+                  Selected: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                </p>
+              )}
+            </div>
+          </>
+        )}
 
         <div className="space-y-8pt">
           <Label htmlFor="title">Document Title</Label>
@@ -228,14 +309,15 @@ export const DocumentUpload = () => {
 
         <Button 
           onClick={handleUpload}
-          disabled={!file || isUploading}
+          disabled={(!file && !isPlainText) || (isPlainText && !plainTextContent.trim()) || isUploading}
           className="w-full gradient-btn flex items-center space-x-8pt"
         >
           {getStatusIcon()}
           <span>
-            {uploadStatus === 'uploading' ? 'Uploading...' : 
-             uploadStatus === 'success' ? 'Upload Complete!' :
-             uploadStatus === 'error' ? 'Upload Failed' : 'Upload Document'}
+             {uploadStatus === 'uploading' ? 'Uploading...' : 
+              uploadStatus === 'success' ? 'Upload Complete!' :
+              uploadStatus === 'error' ? 'Upload Failed' : 
+              isPlainText ? 'Create Text Document' : 'Upload Document'}
           </span>
         </Button>
 
@@ -291,12 +373,13 @@ export const DocumentUpload = () => {
             <div className="text-body text-muted-foreground">
               <p className="font-medium mb-4pt">Supported Formats (Auto-detected):</p>
               <ul className="list-disc list-inside space-y-4pt">
+                <li><strong>Plain Text</strong> - Paste text directly for quick analysis</li>
                 <li><strong>HTML files</strong> - Best for environmental assessments (MVP format)</li>
                 <li><strong>Excel files</strong> - XLS, XLSX spreadsheets with data analysis</li>
                 <li><strong>Text files</strong> - Plain text documents (TXT)</li>
                 <li><strong>PDF documents</strong> - Up to 500MB (basic text extraction)</li>
               </ul>
-              <p className="mt-8pt text-sm">File types are automatically detected. Size limits: 100MB (HTML/Excel/TXT), 500MB (PDF).</p>
+              <p className="mt-8pt text-sm">Use the toggle above to switch between file upload and plain text input. File types are automatically detected. Size limits: 100MB (HTML/Excel/TXT), 500MB (PDF).</p>
             </div>
           </div>
         </div>
