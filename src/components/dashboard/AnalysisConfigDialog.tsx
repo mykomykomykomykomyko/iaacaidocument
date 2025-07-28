@@ -129,13 +129,7 @@ export const AnalysisConfigDialog = ({
         <div className="space-y-24pt">
           {/* Persona Selection */}
           <div className="space-y-12pt">
-            <div className="flex items-center justify-between">
-              <Label className="text-body font-medium">Select Analysis Persona</Label>
-              <Button variant="outline" size="sm">
-                <Plus className="h-3 w-3 mr-4pt" />
-                Create New
-              </Button>
-            </div>
+            <Label className="text-body font-medium">Select Analysis Persona</Label>
             
             {loadingPersonas ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-12pt">

@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Upload, FileText, CheckCircle, AlertCircle, Play, Sparkles } from "lucide-react";
+import { Upload, FileText, CheckCircle, AlertCircle, Play, Sparkles, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { AnalysisConfigDialog } from "./AnalysisConfigDialog";
+import { DocumentViewerDialog } from "./DocumentViewerDialog";
 
 export const DocumentUpload = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -18,6 +19,8 @@ export const DocumentUpload = () => {
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [analysisDialogOpen, setAnalysisDialogOpen] = useState(false);
+  const [viewerDialogOpen, setViewerDialogOpen] = useState(false);
+  const [documentForViewing, setDocumentForViewing] = useState<any>(null);
   const { toast } = useToast();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,6 +109,11 @@ export const DocumentUpload = () => {
     setAnalysisDialogOpen(true);
   };
 
+  const handleViewDocument = (document: any) => {
+    setDocumentForViewing(document);
+    setViewerDialogOpen(true);
+  };
+
   const getStatusIcon = () => {
     switch (uploadStatus) {
       case 'uploading':
@@ -192,14 +200,24 @@ export const DocumentUpload = () => {
                     <p className="font-medium text-body truncate">{doc.title}</p>
                     <p className="text-xs text-muted-foreground">{doc.filename}</p>
                   </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handleAnalyzeDocument(doc)}
-                  >
-                    <Sparkles className="h-3 w-3 mr-4pt" />
-                    Analyze
-                  </Button>
+                  <div className="flex items-center space-x-8pt">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleViewDocument(doc)}
+                    >
+                      <Eye className="h-3 w-3 mr-4pt" />
+                      View
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleAnalyzeDocument(doc)}
+                    >
+                      <Sparkles className="h-3 w-3 mr-4pt" />
+                      Analyze
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -229,6 +247,12 @@ export const DocumentUpload = () => {
           onAnalysisStarted={() => {
             refetchDocuments();
           }}
+        />
+
+        <DocumentViewerDialog
+          document={documentForViewing}
+          open={viewerDialogOpen}
+          onOpenChange={setViewerDialogOpen}
         />
       </CardContent>
     </Card>

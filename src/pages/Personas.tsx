@@ -1,0 +1,468 @@
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter 
+} from "@/components/ui/dialog";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Plus, Edit, Trash2, User, Sparkles, Brain } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+
+interface Persona {
+  id: string;
+  name: string;
+  description?: string;
+  system_prompt: string;
+  expertise_areas?: string[];
+  avatar_emoji: string;
+  is_default?: boolean;
+  created_at: string;
+}
+
+const PersonasManagement = () => {
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
+  const [isGeneratingPersona, setIsGeneratingPersona] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Form state
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    system_prompt: "",
+    expertise_areas: "",
+    avatar_emoji: "🤖"
+  });
+
+  const { data: personas, isLoading } = useQuery({
+    queryKey: ['personas'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('personas')
+        .select('*')
+        .order('is_default', { ascending: false })
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as Persona[];
+    }
+  });
+
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      description: "",
+      system_prompt: "",
+      expertise_areas: "",
+      avatar_emoji: "🤖"
+    });
+  };
+
+  const handleCreate = () => {
+    resetForm();
+    setIsCreateDialogOpen(true);
+  };
+
+  const handleEdit = (persona: Persona) => {
+    setSelectedPersona(persona);
+    setFormData({
+      name: persona.name,
+      description: persona.description || "",
+      system_prompt: persona.system_prompt,
+      expertise_areas: persona.expertise_areas?.join(", ") || "",
+      avatar_emoji: persona.avatar_emoji
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDelete = (persona: Persona) => {
+    setSelectedPersona(persona);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const generatePersonaWithAI = async () => {
+    if (!formData.description.trim()) {
+      toast({
+        title: "Missing description",
+        description: "Please provide a description to generate a persona with AI",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsGeneratingPersona(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-persona', {
+        body: { description: formData.description }
+      });
+
+      if (error) throw error;
+
+      setFormData(prev => ({
+        ...prev,
+        name: data.name || prev.name,
+        system_prompt: data.system_prompt || prev.system_prompt,
+        expertise_areas: data.expertise_areas?.join(", ") || prev.expertise_areas,
+        avatar_emoji: data.avatar_emoji || prev.avatar_emoji
+      }));
+
+      toast({
+        title: "Persona generated",
+        description: "AI has generated the persona details. Review and adjust as needed."
+      });
+    } catch (error) {
+      console.error('Persona generation error:', error);
+      toast({
+        title: "Generation failed",
+        description: "Failed to generate persona with AI. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingPersona(false);
+    }
+  };
+
+  const savePersona = async (isEdit = false) => {
+    if (!formData.name.trim() || !formData.system_prompt.trim()) {
+      toast({
+        title: "Missing required fields",
+        description: "Name and system prompt are required",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const personaData = {
+        name: formData.name.trim(),
+        description: formData.description.trim() || null,
+        system_prompt: formData.system_prompt.trim(),
+        expertise_areas: formData.expertise_areas.trim() 
+          ? formData.expertise_areas.split(",").map(area => area.trim()).filter(Boolean)
+          : null,
+        avatar_emoji: formData.avatar_emoji,
+        is_default: false
+      };
+
+      if (isEdit && selectedPersona) {
+        const { error } = await supabase
+          .from('personas')
+          .update(personaData)
+          .eq('id', selectedPersona.id);
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Persona updated",
+          description: "The persona has been updated successfully"
+        });
+      } else {
+        const { error } = await supabase
+          .from('personas')
+          .insert([personaData]);
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Persona created",
+          description: "New persona has been created successfully"
+        });
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['personas'] });
+      setIsCreateDialogOpen(false);
+      setIsEditDialogOpen(false);
+      resetForm();
+    } catch (error) {
+      console.error('Save persona error:', error);
+      toast({
+        title: "Save failed",
+        description: "Failed to save persona. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedPersona) return;
+
+    try {
+      const { error } = await supabase
+        .from('personas')
+        .delete()
+        .eq('id', selectedPersona.id);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Persona deleted",
+        description: "The persona has been deleted successfully"
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['personas'] });
+      setIsDeleteDialogOpen(false);
+      setSelectedPersona(null);
+    } catch (error) {
+      console.error('Delete persona error:', error);
+      toast({
+        title: "Delete failed",
+        description: "Failed to delete persona. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const PersonaForm = ({ isEdit = false }: { isEdit?: boolean }) => (
+    <div className="space-y-16pt">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-16pt">
+        <div className="space-y-8pt">
+          <Label htmlFor="name">Persona Name *</Label>
+          <Input
+            id="name"
+            value={formData.name}
+            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+            placeholder="e.g., Wildlife Biologist"
+          />
+        </div>
+        <div className="space-y-8pt">
+          <Label htmlFor="emoji">Avatar Emoji</Label>
+          <Input
+            id="emoji"
+            value={formData.avatar_emoji}
+            onChange={(e) => setFormData(prev => ({ ...prev, avatar_emoji: e.target.value }))}
+            placeholder="🤖"
+            maxLength={2}
+          />
+        </div>
+      </div>
+
+      <div className="space-y-8pt">
+        <Label htmlFor="description">Description</Label>
+        <Textarea
+          id="description"
+          value={formData.description}
+          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+          placeholder="Brief description of this persona's expertise and focus areas"
+          rows={2}
+        />
+        {!isEdit && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={generatePersonaWithAI}
+            disabled={isGeneratingPersona || !formData.description.trim()}
+          >
+            {isGeneratingPersona ? (
+              <>
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current mr-8pt"></div>
+                Generating...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-3 w-3 mr-8pt" />
+                Generate with AI
+              </>
+            )}
+          </Button>
+        )}
+      </div>
+
+      <div className="space-y-8pt">
+        <Label htmlFor="expertise">Expertise Areas (comma-separated)</Label>
+        <Input
+          id="expertise"
+          value={formData.expertise_areas}
+          onChange={(e) => setFormData(prev => ({ ...prev, expertise_areas: e.target.value }))}
+          placeholder="e.g., wildlife conservation, habitat assessment, biodiversity"
+        />
+      </div>
+
+      <div className="space-y-8pt">
+        <Label htmlFor="system_prompt">System Prompt *</Label>
+        <Textarea
+          id="system_prompt"
+          value={formData.system_prompt}
+          onChange={(e) => setFormData(prev => ({ ...prev, system_prompt: e.target.value }))}
+          placeholder="Define how this persona should analyze documents and what expertise they bring..."
+          rows={6}
+        />
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-24pt">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">AI Analysis Personas</h1>
+          <p className="text-muted-foreground">
+            Manage specialized AI personas for document analysis
+          </p>
+        </div>
+        <Button onClick={handleCreate}>
+          <Plus className="h-4 w-4 mr-8pt" />
+          Create New Persona
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-16pt">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="pt-24pt">
+                <div className="h-4 bg-muted rounded w-3/4 mb-8pt"></div>
+                <div className="h-3 bg-muted rounded w-1/2 mb-12pt"></div>
+                <div className="h-16 bg-muted rounded"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-16pt">
+          {personas?.map((persona) => (
+            <Card key={persona.id} className="hover:shadow-md transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center space-x-8pt">
+                    <span className="text-lg">{persona.avatar_emoji}</span>
+                    <span className="text-body">{persona.name}</span>
+                  </div>
+                  <div className="flex items-center space-x-4pt">
+                    {persona.is_default && (
+                      <Badge variant="secondary" className="text-xs">Default</Badge>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEdit(persona)}
+                    >
+                      <Edit className="h-3 w-3" />
+                    </Button>
+                    {!persona.is_default && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(persona)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-body text-muted-foreground mb-12pt line-clamp-2">
+                  {persona.description || "No description provided"}
+                </p>
+                
+                {persona.expertise_areas && persona.expertise_areas.length > 0 && (
+                  <div className="flex flex-wrap gap-4pt mb-12pt">
+                    {persona.expertise_areas.slice(0, 3).map((area, idx) => (
+                      <Badge key={idx} variant="outline" className="text-xs">
+                        {area}
+                      </Badge>
+                    ))}
+                    {persona.expertise_areas.length > 3 && (
+                      <Badge variant="outline" className="text-xs">
+                        +{persona.expertise_areas.length - 3}
+                      </Badge>
+                    )}
+                  </div>
+                )}
+
+                <div className="text-xs text-muted-foreground">
+                  <strong>System Prompt:</strong>
+                  <p className="mt-4pt line-clamp-3">{persona.system_prompt}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Create Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-8pt">
+              <User className="h-5 w-5" />
+              <span>Create New Persona</span>
+            </DialogTitle>
+          </DialogHeader>
+          <PersonaForm />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => savePersona(false)}>
+              Create Persona
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-8pt">
+              <Edit className="h-5 w-5" />
+              <span>Edit Persona</span>
+            </DialogTitle>
+          </DialogHeader>
+          <PersonaForm isEdit />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => savePersona(true)}>
+              Update Persona
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Persona</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{selectedPersona?.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+};
+
+export default PersonasManagement;
