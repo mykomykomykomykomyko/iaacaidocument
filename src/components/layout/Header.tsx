@@ -70,7 +70,7 @@ export const Header = () => {
                 size="sm"
                 asChild
               >
-                <Link to="/">
+                <Link to="/" className="text-white">
                   <Home className="h-4 w-4 mr-2" />
                   {t('header.dashboard')}
                 </Link>
