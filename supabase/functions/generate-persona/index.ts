@@ -36,7 +36,9 @@ Please provide a JSON response with the following structure:
   "avatar_emoji": "🔬"
 }
 
-Focus on environmental and impact assessment domains. Make the system prompt specific and actionable for document analysis.`;
+IMPORTANT: Make sure expertise_areas is a proper JSON array with square brackets and quoted strings.
+Focus on environmental and impact assessment domains. Make the system prompt specific and actionable for document analysis.
+Return ONLY the JSON object, nothing else.`;
 
     const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
       method: 'POST',

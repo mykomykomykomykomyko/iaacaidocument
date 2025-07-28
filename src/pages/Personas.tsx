@@ -169,7 +169,9 @@ const PersonasManagement = () => {
         name: data.name,
         description: aiPrompt.trim(),
         system_prompt: data.system_prompt,
-        expertise_areas: data.expertise_areas ? data.expertise_areas.join(", ") : "",
+        expertise_areas: Array.isArray(data.expertise_areas) 
+          ? data.expertise_areas 
+          : data.expertise_areas?.split(",").map((area: string) => area.trim()).filter(Boolean) || [],
         avatar_emoji: data.avatar_emoji,
         is_default: false
       };
