@@ -1,19 +1,28 @@
 import { Button } from "@/components/ui/button";
-import { User, Home, Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { User, Home, Globe } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export const Header = () => {
   const location = useLocation();
+  const { language, setLanguage, t } = useLanguage();
+
+  const toggleLanguage = () => {
+    setLanguage(language === 'en' ? 'fr' : 'en');
+  };
+
   return (
     <div>
       {/* Top bar with language toggle */}
       <div className="bg-background border-b border-border">
         <div className="container mx-auto px-6 py-2">
           <div className="flex justify-end">
-            <a href="#" className="text-sm text-primary hover:text-primary/80 underline">
-              Français
-            </a>
+            <button 
+              onClick={toggleLanguage}
+              className="text-sm text-primary hover:text-primary/80 underline"
+            >
+              {language === 'en' ? t('header.french') : t('header.english')}
+            </button>
           </div>
         </div>
       </div>
@@ -31,29 +40,11 @@ export const Header = () => {
               />
               <div className="flex flex-col">
                 <div className="text-lg font-semibold text-foreground leading-tight">
-                  Government of Canada
+                  {t('header.govCanada')}
                 </div>
-                <div className="text-lg font-semibold text-foreground leading-tight">
-                  Gouvernement du Canada
+                <div className="text-sm text-muted-foreground leading-tight">
+                  {t('header.govCanadaFr')}
                 </div>
-              </div>
-            </div>
-            
-            {/* Search and Navigation */}
-            <div className="flex items-center space-x-4">
-              <div className="relative">
-                <Input
-                  type="search"
-                  placeholder="Search Canada.ca"
-                  className="w-64 pr-10"
-                />
-                <Button 
-                  size="sm" 
-                  className="absolute right-0 top-0 h-full px-3"
-                  variant="default"
-                >
-                  <Search className="h-4 w-4" />
-                </Button>
               </div>
             </div>
           </div>
@@ -66,10 +57,10 @@ export const Header = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-lg font-semibold text-foreground">
-                AI Document Analysis Tool
+                {t('header.appTitle')}
               </h1>
               <p className="text-sm text-muted-foreground">
-                Impact Assessment Agency of Canada
+                {t('header.agency')}
               </p>
             </div>
             
@@ -81,9 +72,20 @@ export const Header = () => {
               >
                 <Link to="/">
                   <Home className="h-4 w-4 mr-2" />
-                  Dashboard
+                  {t('header.dashboard')}
                 </Link>
               </Button>
+              
+              <Button 
+                onClick={toggleLanguage}
+                variant="ghost" 
+                size="sm"
+                className="ml-2"
+              >
+                <Globe className="h-4 w-4 mr-2" />
+                {language === 'en' ? 'FR' : 'EN'}
+              </Button>
+              
               <Button 
                 variant={location.pathname === "/personas" ? "default" : "ghost"} 
                 size="sm"
@@ -91,7 +93,7 @@ export const Header = () => {
               >
                 <Link to="/personas">
                   <User className="h-4 w-4 mr-2" />
-                  Personas
+                  {t('header.personas')}
                 </Link>
               </Button>
             </nav>
