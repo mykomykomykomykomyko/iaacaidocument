@@ -183,7 +183,7 @@ ${custom_instructions}`;
     }
 
     analysisPrompt += `
-
+ 
 Please provide a comprehensive analysis in markdown format with the following structure:
 1. **Executive Summary**
 ${isBulkAnalysis ? 
@@ -199,10 +199,13 @@ ${isBulkAnalysis ?
 }
 7. **Confidence Assessment** - Rate your confidence in this analysis from 0-100%
 
+IMPORTANT: Throughout your analysis, when referencing specific information, include page citations in this format: [Page X] where X is the page number. For example: "The environmental impact assessment indicates significant concerns [Page 5]" or "Mitigation measures are outlined [Page 12]".
+
 At the end of your analysis, provide:
 
 CONFIDENCE_SCORE: [0-100]
 KEY_FINDINGS: [Finding 1], [Finding 2], [Finding 3]
+PAGE_REFERENCES: [{"page": 1, "text": "Brief description of what's on this page"}, {"page": 5, "text": "Environmental concerns identified"}, {"page": 12, "text": "Mitigation measures outlined"}]
 
 Format your response using proper markdown headers and bullet points for clarity.`;
 
@@ -229,9 +232,10 @@ Format your response using proper markdown headers and bullet points for clarity
     
     console.log('Gemini analysis completed');
 
-    // Extract confidence score and key findings from the analysis
+    // Extract confidence score, key findings, and page references from the analysis
     let confidenceScore = 0.75; // Default fallback
     let keyFindings = ['Analysis completed', 'Review required'];
+    let pageReferences: Array<{page: number, text: string}> = [];
     
     try {
       // Extract confidence score
@@ -249,6 +253,20 @@ Format your response using proper markdown headers and bullet points for clarity
           .filter(finding => finding.length > 0)
           .slice(0, 5); // Limit to 5 findings
       }
+
+      // Extract page references
+      const pageReferencesMatch = analysisContent.match(/PAGE_REFERENCES:\s*(\[.+?\])/i);
+      if (pageReferencesMatch) {
+        try {
+          pageReferences = JSON.parse(pageReferencesMatch[1]);
+          // Validate the structure
+          pageReferences = pageReferences.filter(ref => 
+            ref && typeof ref.page === 'number' && typeof ref.text === 'string'
+          );
+        } catch (parseError) {
+          console.warn('Failed to parse page references JSON:', parseError);
+        }
+      }
     } catch (extractionError) {
       console.warn('Failed to extract metadata from analysis:', extractionError);
     }
@@ -257,6 +275,7 @@ Format your response using proper markdown headers and bullet points for clarity
     const cleanAnalysisContent = analysisContent
       .replace(/CONFIDENCE_SCORE:\s*\d+/gi, '')
       .replace(/KEY_FINDINGS:\s*.+/gi, '')
+      .replace(/PAGE_REFERENCES:\s*\[.+?\]/gi, '')
       .trim();
 
     // Update analysis with results
@@ -266,6 +285,7 @@ Format your response using proper markdown headers and bullet points for clarity
         analysis_content: cleanAnalysisContent,
         key_findings: keyFindings,
         confidence_score: confidenceScore,
+        page_references: pageReferences,
         status: 'completed'
       })
       .eq('id', analysis.id);

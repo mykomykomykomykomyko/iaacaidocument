@@ -12,6 +12,7 @@ import { Clock, User, BarChart3, CheckCircle, AlertCircle, FileText, Eye } from 
 import { formatDistanceToNow } from "date-fns";
 import ReactMarkdown from "react-markdown";
 import { DocumentViewerDialog } from "./DocumentViewerDialog";
+import { AnalysisPDFViewer } from "./AnalysisPDFViewer";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 
@@ -37,6 +38,7 @@ interface Analysis {
   confidence_score?: number;
   key_findings?: string[];
   document_id?: string;
+  page_references?: Array<{page: number, text: string}>;
 }
 
 interface AnalysisDetailDialogProps {
@@ -63,6 +65,8 @@ const getConfidenceColor = (confidence: number) => {
 export const AnalysisDetailDialog = ({ analysis, open, onOpenChange }: AnalysisDetailDialogProps) => {
   const [sourceDocument, setSourceDocument] = useState<Document | null>(null);
   const [documentViewerOpen, setDocumentViewerOpen] = useState(false);
+  const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
+  const [selectedPage, setSelectedPage] = useState<number>(1);
   const [loadingDocument, setLoadingDocument] = useState(false);
 
   useEffect(() => {
@@ -96,6 +100,13 @@ export const AnalysisDetailDialog = ({ analysis, open, onOpenChange }: AnalysisD
   const handleViewDocument = () => {
     if (sourceDocument) {
       setDocumentViewerOpen(true);
+    }
+  };
+
+  const handlePageReferenceClick = (pageNumber: number) => {
+    if (sourceDocument) {
+      setSelectedPage(pageNumber);
+      setPdfViewerOpen(true);
     }
   };
 
@@ -193,6 +204,37 @@ export const AnalysisDetailDialog = ({ analysis, open, onOpenChange }: AnalysisD
             </Card>
           )}
 
+          {/* Page References */}
+          {analysis.page_references && analysis.page_references.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-8pt">
+                  <FileText className="h-5 w-5" />
+                  <span>Referenced Pages</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8pt">
+                  {analysis.page_references.map((ref, index) => (
+                    <Button
+                      key={index}
+                      variant="outline"
+                      className="p-12pt h-auto text-left justify-start"
+                      onClick={() => handlePageReferenceClick(ref.page)}
+                    >
+                      <div>
+                        <div className="font-medium text-body">Page {ref.page}</div>
+                        <div className="text-xs text-muted-foreground mt-2pt line-clamp-2">
+                          {ref.text}
+                        </div>
+                      </div>
+                    </Button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Key Findings */}
           {analysis.key_findings && analysis.key_findings.length > 0 && (
             <Card>
@@ -262,6 +304,13 @@ export const AnalysisDetailDialog = ({ analysis, open, onOpenChange }: AnalysisD
         document={sourceDocument}
         open={documentViewerOpen}
         onOpenChange={setDocumentViewerOpen}
+      />
+
+      <AnalysisPDFViewer
+        document={sourceDocument}
+        open={pdfViewerOpen}
+        onOpenChange={setPdfViewerOpen}
+        initialPage={selectedPage}
       />
     </Dialog>
   );

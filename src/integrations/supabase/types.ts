@@ -24,6 +24,7 @@ export type Database = {
           document_id: string
           id: string
           key_findings: string[] | null
+          page_references: Json | null
           persona: string
           persona_id: string | null
           recommendations: string[] | null
@@ -41,6 +42,7 @@ export type Database = {
           document_id: string
           id?: string
           key_findings?: string[] | null
+          page_references?: Json | null
           persona?: string
           persona_id?: string | null
           recommendations?: string[] | null
@@ -58,6 +60,7 @@ export type Database = {
           document_id?: string
           id?: string
           key_findings?: string[] | null
+          page_references?: Json | null
           persona?: string
           persona_id?: string | null
           recommendations?: string[] | null

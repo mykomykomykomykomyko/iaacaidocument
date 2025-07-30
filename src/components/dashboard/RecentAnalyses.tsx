@@ -18,6 +18,8 @@ interface Analysis {
   created_at: string;
   confidence_score?: number;
   key_findings?: string[];
+  page_references?: Array<{page: number, text: string}>;
+  document_id?: string;
 }
 
 const getStatusColor = (status: string) => {
@@ -65,7 +67,9 @@ export const RecentAnalyses = () => {
           status,
           created_at,
           confidence_score,
-          key_findings
+          key_findings,
+          page_references,
+          document_id
         `)
         .order('created_at', { ascending: false })
         .limit(5);
