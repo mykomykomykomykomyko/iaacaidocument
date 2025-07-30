@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/LanguageContext";
+import ReactMarkdown from "react-markdown";
 
 interface Message {
   id: string;
@@ -219,7 +220,15 @@ export const ChatbotInterface = () => {
                             : 'bg-muted'
                         }`}
                       >
-                        <div className="text-body whitespace-pre-wrap">{message.content}</div>
+                        <div className="text-body whitespace-pre-wrap">
+                          {message.role === 'assistant' ? (
+                            <div className="prose prose-sm max-w-none dark:prose-invert">
+                              <ReactMarkdown>{message.content}</ReactMarkdown>
+                            </div>
+                          ) : (
+                            message.content
+                          )}
+                        </div>
                         {message.sources && message.sources.length > 0 && (
                           <div className="mt-8pt pt-8pt border-t border-muted-foreground/20">
                             <div className="flex items-center space-x-4pt text-xs text-muted-foreground mb-4pt">
